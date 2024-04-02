@@ -9,14 +9,14 @@ Implement interactive and batch modes:
 	interactive mode: user inputted commands
 		when given no arguments will read commands from standard input
 	batch mode: read commands from file or piped in
-		will take UPTO one argument	
+		will take UP TO one argument	
 *both* will read and interpret a sequence of commands
 
 use *read()* to obtain input
 	(1). obtain a full command before executing it
 	(2). not call **read()** after receiving a newline character until it has executed the received command
 
-*mysh* terminates when it recieves the **exit** command, or when its input stream ends.
+*mysh* terminates when it receives the **exit** command, or when its input stream ends.
 
 ### Interactive mode
 - print welcome message before first command prompt
@@ -86,7 +86,7 @@ $
 	- NOTE: It can happen anywhere in a program. 
 
 ***pipelines***
-- The special token | seperates two programs in a pipeline. it redirects stuff. We can use ```pipe()``` to arrange standard output for the first process. 
+- The special token "|" separates two programs in a pipeline. it redirects stuff. We can use ```pipe()``` to arrange standard output for the first process. 
 	- Assume only two processes. 
 
 ***conditionals***
@@ -98,32 +98,32 @@ $
 ### Program name
 argument 1 is the program that is wished to be executed
     this can either be:
-        1. name of the program
-        2. path to the program
-        3. a "built-in" command
+1. Name of the program
+2. Path to the program
+3. A "built-in" command
 
 #### Pathnames
-IF first argumant conains / **assume** it is a path
+**IF** first argument contains '/' **assume** it is a path
 
 #### Bare names
 IF the first argument is not a path (including a /) nor built-in
-then search for the name of the argument in these directories sequentually:
-    1. /usr/local/bin
-    2. /usr/bin
-    3. /bin
+then search for the name of the argument in these directories sequentially:    
+1. /usr/local/bin
+2. /usr/bin
+3. /bin
 
-WE CAN USE *ACCESS()* TO DETERMINE IF A FILE WITH AN APPROPRIATE NAME EXISTS IN THESE (the previously referred) DIRECTORIES?! WHY DIDNT ANYONE TELL ME?! (do not implement cp, mv, cat, etc).
+WE CAN USE ```access()``` TO DETERMINE IF A FILE WITH AN APPROPRIATE NAME EXISTS IN THESE (the previously referred) DIRECTORIES?! WHY DIDN'T ANYONE TELL ME?! (do not implement cp, mv, cat, etc).
 
 
 #### Built-in commands
 - pwd
-    - *(**pwd**) prints the current working directory to standard output. This can be obtained using getcwd().*
+    - *(**pwd**) prints the current working directory to standard output. This can be obtained using ```getcwd()```.*
 - which
     - *(**which**) takes a single argument, which is the name of a program. It prints the path that mysh would use if asked to start that program. (That is, the result of the search used for bare names.) which prints nothing and fails if it is given the wrong number of arguments, or the name of a built-in, or if the program is not found.*
 - exit
     - *(**exit**) indicates that mysh should cease reading commands and terminate. Additionally, exit should print any arguments it receives, separated by spaces*
 - cd
-    - *(**cd**) should print an error message and fail if it is given the wrong number of arguments, or if chdir() fails.*
+    - *(**cd**) should print an error message and fail if it is given the wrong number of arguments, or if ```chdir()``` fails.*
 
 (these MAY exist in the previous directories but ignore them)
 
@@ -146,13 +146,13 @@ WE CAN USE *ACCESS()* TO DETERMINE IF A FILE WITH AN APPROPRIATE NAME EXISTS IN 
 
 an argument after '>' or '<' is automatically considered a path to a file. it IS NOT included in the argument list for the program
 
--  mysh should open the specified file in the appropriate mode and use dup2() in the child process to redefine file 0 or 1 before calling execv().
+-  mysh should open the specified file in the appropriate mode and use ```dup2()``` in the child process to redefine file 0 or 1 before calling ```execv()```.
 - If mysh is unable to open the file in the requested mode, it should report an error and set the last exit status to 1.
 
 ### Pipes
 - Pipe connects standard input from one program to the standard output of another.
 	- This allows data to "flow" from one program to the next. 
-	- Use pipe() to make a pipe, then dup2() to set the standard of the child process to the first process to the standard input of the second process.
+	- Use ```pipe()``` to make a pipe, then ```dup2()``` to set the standard of the child process to the first process to the standard input of the second process.
 		- If pipe fails, print an error message. 
 ### Additional notes
 - Assume no wildcard after < or >. 
@@ -246,13 +246,13 @@ when a UNIX process executes another program it takes over in its entirety. so- 
 ```c
 pid_t fork(void)
 ```
-First, you’ll need to create a new process. This must be done using the system call fork(), which creates a new “child” process which is an exact replica of the “parent” (the process which executed the system call). This child process begins execution at the point where the call to fork() returns. fork() returns 0 to the child process, and the child’s process ID (abbreviated pid) to the parent.
+First, you’ll need to create a new process. This must be done using the system call ```fork()```, which creates a new “child” process which is an exact replica of the “parent” (the process which executed the system call). This child process begins execution at the point where the call to ```fork()``` returns. ```fork()``` returns 0 to the child process, and the child’s process ID (abbreviated pid) to the parent.
 
 #### execv()
 ```c
 int execv(const char *filename, char *const argv[])
 ```
-To actually execute a program, use the library function execv(). Because execv() replaces the entire process image with that of the new program, this function never returns if it is successful. Its arguments include filename, the full path to the program to be executed, and argv, a null-terminated argument vector. Note that argv[0] MUST be the binary name (the final path 1 component of filepath), NOT the full path to the program (which means you will have to do some processing in constructing argv[0] from filename).
+To actually execute a program, use the library function ```execv()```. Because ```execv()``` replaces the entire process image with that of the new program, this function never returns if it is successful. Its arguments include filename, the full path to the program to be executed, and argv, a null-terminated argument vector. Note that argv[0] MUST be the binary name (the final path 1 component of filepath), NOT the full path to the program (which means you will have to do some processing in constructing argv[0] from filename).
 
 As an example, the shell command /bin/echo 'Hello World!' would have an argv that looks like this:
 
@@ -288,7 +288,7 @@ This command waits for a status change in the child- such as termination. This p
 
 ### Files, File Descriptors, Terminal I/O
 #### File descriptors
-A file descriptor is simply an integer which the operating system maps to a file location. Processes do not directly access files using FILE structs but rather through the kernal by using file descriptors and low-level system calls.
+A file descriptor is simply an integer which the operating system maps to a file location. Processes do not directly access files using FILE structs but rather through the kernel by using file descriptors and low-level system calls.
 
 Subprocesses inherit open files and their corresponding file descriptors from their parent process. As a result, processes started from within a normal UNIX shell inherit three open files:
 stdin, stdout, and stderr, which are assigned file descriptors 0, 1, and 2 respectively. Since 2 your shell will be run from within the system’s built-in shell, it inherits these file descriptors; processes executed within your shell will then also inherit them. As a result, whenever your shell or any process executed within it writes characters to file descriptor 1 (the descriptor corresponding to stdout), those characters will appear in the terminal window.
@@ -299,15 +299,15 @@ int open(const char *pathname, int flags, mode_t mode)
 ```
 open opens a file for reading or writing, located at the relative, or absolute pathname, and returns a new file descriptor which maps to that file.
 
-the other values are how the file should be opened and the flags indacate the status flags and access modes. mode is used to determine the default permissions of the file if it must be created.
+the other values are how the file should be opened and the flags indicate the status flags and access modes. mode is used to determine the default permissions of the file if it must be created.
 
 #### close()
 ```c
 int close(int fd)
 ```
-close() closes an open file descriptor, which allows it to be reopened and reused later in the
+```close()``` closes an open file descriptor, which allows it to be reopened and reused later in the
 life of the calling process. If no other file descriptors of the calling process map to the same file,
-any system resources associated with that file are freed. close() returns 0 on success and −1
+any system resources associated with that file are freed. ```close()``` returns 0 on success and −1
 on error.
 
 
@@ -315,7 +315,7 @@ on error.
 ```c
 ssize_t read(int fd, void *buf, size_t count)
 ```
-read() reads up to count bytes from the given file descriptor (fd) into the buffer pointed to by
+```read()``` reads up to count bytes from the given file descriptor (fd) into the buffer pointed to by
 buf. It returns the number of characters read and advances the file position by that many bytes,
 or returns −1 if an error occurred. Check and use this return value. It is otherwise impossible
 to safely use the buffer contents. **Note that read does not null terminate the buffer.**
@@ -330,7 +330,7 @@ available to be read—a condition called end of file (EOF). In this case, your 
 ```c
 ssize_t write(int fd, const void *buf, size_t count)
 ```
-write() writes up to count bytes from the buffer pointed to by buf to the given file descriptor
+```write()``` writes up to count bytes from the buffer pointed to by buf to the given file descriptor
 (fd). It returns the number of bytes successfully written, or −1 on an error.
 
 #### printf()
@@ -340,7 +340,7 @@ int printf(const char *format, ...)
 
 the difference between this and write is that by default printf outputs to STDOUT. no file descriptor is needed
 
-**NOTE:** if you’re using printf() to write a string that doesn’t end in a newline (hint: your prompt), you must use fflush(stdout) after printf() to actually write your output to the terminal.
+**NOTE:** if you’re using ```printf()``` to write a string that doesn’t end in a newline (hint: your prompt), you must use fflush(stdout) after ```printf()``` to actually write your output to the terminal.
 
 ### Prompt Format (this section is for testing)
 While the contents of your shell’s prompt are up to you, you must implement a particular feature
@@ -360,9 +360,9 @@ if (printf("33sh> ") < 0) {
 }
 #endif
 ```
-**Note:** If you choose to use printf() to write your prompts, and not write(), there is an
+**Note:** If you choose to use ```printf()``` to write your prompts, and not ```write()```, there is an
 additional step you will have to take to get the prompt to show up in the terminal, because the
-prompt does not end in a newline. See the printf() section for more details.
+prompt does not end in a newline. See the ```printf()``` section for more details.
 
 ## Input and Output Redirection
 ### File Redirection
@@ -374,37 +374,37 @@ the redirection commands (<, >, or >>) can appear anywhere within a command in a
 - \> [path] - Use file [path] as standard output (file descriptor 1). If the file does not exist, it is created; otherwise, it is truncated to zero length. (See the description of the O_CREAT and O_TRUNC flags in the open(2) man page.)
 - \>> [path] - Use file [path] as standard output. If the file does not exist, it is created; otherwise, output is appended to the end of it. (See the description of the O_APPEND flag in the open(2) man page.)
 
-it is **ILLEGAL** to reirect input or output twice (although it is perfectly legal to redirect input and redirect output).
+it is **ILLEGAL** to redirect input or output twice (although it is perfectly legal to redirect input and redirect output).
 
 ### Redirecting a File Descriptor (a good and useful read)
 To make a program executed by your child process read input from or write output to a specific file, rather than use the default stdin and stdout, we have to redirect the stdin and stdout file descriptors to point to the specified input and output files. Luckily, the kernel’s default behavior provides an elegant solution to this problem: when a file is opened, the kernel returns the smallest file descriptor available, regardless of its traditional association. Thus, if we close file descriptor 1 (stdout) and then open a file on disk, that file will be assigned file descriptor 1. Then, when our program writes to file descriptor 1, it will be writing to the file we’ve opened
 rather than stdout (which traditionally corresponds to file descriptor 1 by default).
 
 For the purposes of this project, we won’t be concerned with restoring the original file
-descriptors for stdout and stdin in the child process as it won’t affect your shell. If you’re interested in the technically safer (but more complex) way to redirect files, check out the dup() and dup2() man pages.
+descriptors for stdout and stdin in the child process as it won’t affect your shell. If you’re interested in the technically safer (but more complex) way to redirect files, check out the ```dup()``` and ```dup2()``` man pages.
 
 ## Use of Library Functions
-You should use the read() system call to read from file descriptors **STDIN_FILENO** (a macro defined as 0), **STDOUT_FILENO** (1), and **STDERR_FILENO** (2), which correspond to the file streams for standard input, standard output, and standard error respectively. You should use the write() system call to write to **STDOUT_FILENO** or **STDERR_FILENO** OR the higher level non-system calls printf() (which doesn’t require a specified file descriptor) and fprintf().
+You should use the ```read()``` system call to read from file descriptors **STDIN_FILENO** (a macro defined as 0), **STDOUT_FILENO** (1), and **STDERR_FILENO** (2), which correspond to the file streams for standard input, standard output, and standard error respectively. You should use the ```write()``` system call to write to **STDOUT_FILENO** or **STDERR_FILENO** OR the higher level non-system calls ```printf()``` (which doesn’t require a specified file descriptor) and ```fprintf()```.
 
 *the allowed non-sys calls from brown. I suppose useful*
 
 Memory-Related:
-- memset() memmove() memchr() memcmp() memcpy()
+- ```memset()``` ```memmove()``` ```memchr()``` ```memcmp()``` ```memcpy()```
 
 Strings Manipulation:
-- str(n)cat() tolower() strtol() isalnum() isalpha() iscntrl() isdigit() islower() isprint() ispunct() isspace() isxdigit() str(n)cat() str(n)cmp() str(n)cpy() strtol() isgraph() isupper() strlen() strpbrk() strstr() strtok() str(r)chr() str(c)spn() toupper() atoi()
+- ```str(n)cat()``` ```tolower()``` ```strtol()``` ```isalnum()``` ```isalpha()``` ```iscntrl()``` ```isdigit()``` ```islower()``` ```isprint()``` ```ispunct()``` ```isspace()``` ```isxdigit()``` ```str(n)cat()``` ```str(n)cmp()``` ```str(n)cpy()``` ```strtol()``` ```isgraph()``` ```isupper()``` ```strlen()``` ```strpbrk()``` ```strstr()``` ```strtok()``` ```str(r)chr()``` ```str(c)spn()``` ```toupper()``` ```atoi()```
 
 Error-Handling:
-- perror() assert() strerror()
+- ```perror()``` ```assert()``` ```strerror()```
 
 Output:
-- fflush() printf() (v)s(n)printf() fprintf()
+- ```fflush()``` ```printf()``` ```(v)s(n)printf()``` ```fprintf()```
 
 Misc:
-- exit() execv() opendir() readdir() closedir()
+- ```exit()``` ```execv()``` ```opendir()``` ```readdir()``` ```closedir()```
 
 ### Error Handling
-dont forget to make functions to handle some functions error handling. since most functions return a value like -1 when an error is caused
+Don't forget to make functions to handle some functions error handling. since most functions return a value like -1 when an error is caused
 
 ## Support
 ### which()

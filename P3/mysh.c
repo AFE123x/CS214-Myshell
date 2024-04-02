@@ -4,6 +4,13 @@
 #include "./parser.h"
 #include <string.h>
 #include<dirent.h>
+
+//the big 3 directories we will use to find programs
+//should be checked sequentially for programs
+char* DirectoryOne = "/usr/local/bin";
+char* DirectoryTwo = "/usr/bin";
+char* DirectoryThree = "/bin";
+
 void cd(const char *path) {
     if (chdir(path) == -1) {
         perror("cd");
