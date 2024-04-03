@@ -7,10 +7,15 @@
 
 //the big 3 directories we will use to find programs
 //should be checked sequentially for programs
+//ONLY used when the first argument is NOT a built-in function or if the "/" is not present
 char* DirectoryOne = "/usr/local/bin";
+//ONLY used when the first argument is NOT a built-in function or if the "/" is not present
 char* DirectoryTwo = "/usr/bin";
+//ONLY used when the first argument is NOT a built-in function or if the "/" is not present
 char* DirectoryThree = "/bin";
 
+
+/////////////////////////built-in commands
 void cd(const char *path) {
     if (chdir(path) == -1) {
         perror("cd");
@@ -18,6 +23,7 @@ void cd(const char *path) {
 }
 
 // Function to implement ls command
+// we do not need to implement ls
 void ls() {
     DIR *dir;
     struct dirent *entry;
@@ -33,6 +39,7 @@ void ls() {
 
     closedir(dir);
 }
+////////////////////////
 
 int main (int argc, char** argv) {
     while(1){ 
