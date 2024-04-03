@@ -5,7 +5,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-
 void search_directory(const char *path, const char* program) {
     DIR *directory;
     struct dirent *entry;

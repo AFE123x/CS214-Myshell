@@ -38,53 +38,63 @@ void cd(const char *path) {
     }
 }
 
-int search_directory(const char *path, const char *program) {
-    DIR *directory;
-    struct dirent *entry;
-    struct stat info;
+ int search_directory(const char *path, char* program) {
+     DIR *directory;
+     struct dirent *entry;
+     struc stat info;
+    write(STDOUT_FILENO, program,strlen(program));
+    write(STDOUT_FILENO,"\n",1);
+     directory = opendir(path);
+     if (directory == NULL) {
+         perror("opendir");
+         return 1;
+     }
+    char backup[strlen(program) + 1];
+    strcpy(backup,program);
+     while ((entry = readdir(directory)) != NULL) {
+         char full_path[BUFFER_SIZE];
+         memset(full_path, 0, BUFFER_SIZE);
+         strcpy(full_path,path);
+         strcat(full_path,entry->d_name);
+         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+             continue;
 
-    directory = opendir(path);
-    if (directory == NULL) {
-        perror("opendir");
-        return 1;
-    }
+        write(STDOUT_FILENO, full_path, strlen(full_path));
+        write(STDOUT_FILENO, " == ",4);
+        write(STDOUT_FILENO, program, strlen(program));
+        write(STDOUT_FILENO,"\t",1);
+        write(STDOUT_FILENO, !strcmp(entry->d_name, backup) ? "good" : "badd", 4);
+        write(STDOUT_FILENO, "\n", 1); // Add newline
 
-    while ((entry = readdir(directory)) != NULL) {
-        char full_path[BUFFER_SIZE];
-        
-        strcpy(full_path, path);
-        strcat(full_path,"/");
-        strcat(full_path, entry->d_name);
-        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
-            continue;
+         if (strcmp(entry->d_name, backup) == 0) {
+             write(STDOUT_FILENO, full_path, strlen(full_path));
+             write(STDOUT_FILENO, "\n", 1); // Add newline
+             closedir(directory); // Close directory since program is found
+             return 0; // Exit the function
+         }
+     }
 
-        if (strcmp(entry->d_name, program) == 0) {
-            write(STDOUT_FILENO, full_path, strlen(full_path));
-            write(STDOUT_FILENO, "\n", 1); // Add newline
-            closedir(directory); // Close directory since program is found
-            return 0; // Exit the function
-        }
-    }
+     // Close the directory
+     closedir(directory);
+     return 1;
+ }
 
-    // Close the directory
-    closedir(directory);
-    return 1;
-}
+//prints the path mysh will use for a given program
+//will only print something IF the program is found
+//will not print if the program is built-in or if the program is not found
 
-void which(const char *program) {
+void which(char* program) {
     int toreturn = 0;
-    if (!DEBUG) {
-        toreturn = search_directory(DirectoryOne, program);
-        if (toreturn != 0) {
-            toreturn = search_directory(DirectoryTwo, program);
-            if (toreturn != 0) {
-                toreturn = search_directory(DirectoryThree, program);
-            }
-        }
-    } else {
-        search_directory("./", program);
+    if(!DEBUG){
+    toreturn = search_directory(DirectoryOne,program);
+    if(toreturn == 0) {toreturn = search_directory(DirectoryTwo,program);}
+    if(!toreturn == 0) toreturn = search_directory(DirectoryThree,program);
+    }
+    else{
+        search_directory("./",program);
     }
 }
+
 
 //prints the working directory
 void pwd() {
