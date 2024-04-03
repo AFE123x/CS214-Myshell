@@ -25,17 +25,13 @@ void search_directory(const char *path, const char* program) {
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
             continue;
 
-        printf("%s\n", entry->d_name);
+        // printf("%s\n", entry->d_name);
 
         if (!strcmp(entry->d_name, program)) {
             write(STDOUT_FILENO, full_path, strlen(full_path));
             write(STDOUT_FILENO, "\n", 1); // Add newline
             closedir(directory); // Close directory since program is found
             return; // Exit the function
-        }
-
-        if (stat(full_path, &info) == 0 && S_ISDIR(info.st_mode)) {
-            search_directory(full_path, program);
         }
     }
 

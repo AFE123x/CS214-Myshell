@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -fsanitize=address,undefined,leak -std=c99 -O2 -Wall -g
+CFLAGS = -fsanitize=address,undefined,leak -std=c99 -Og -Wall -g
 
 mysh: mysh.o parser.o
 	$(CC) -o $@ $^ $(CFLAGS)

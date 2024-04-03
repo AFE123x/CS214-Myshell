@@ -1,0 +1,103 @@
+[33mcommit 59251f3a2a4d49fd314ac1982fb9d2513c2eae38[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Shadowkj1 <keshankkj@gmail.com>
+Date:   Tue Apr 2 23:02:31 2024 -0400
+
+    Batch Mode entering created, Which function started, pwd, and exit implemented.
+    
+    Co-authored-by: AFE123x <AFE123x@users.noreply.github.com>
+
+[33mcommit 937baa97d8958f5943dfcff91755b27c53bc4265[m
+Author: AFE123x <arunf400@gmail.com>
+Date:   Tue Apr 2 22:15:51 2024 -0400
+
+    sync
+
+[33mcommit e2a470a6890393665531ab61842bfd32155a91d7[m
+Author: Shadowkj1 <keshankkj@gmail.com>
+Date:   Tue Apr 2 22:14:12 2024 -0400
+
+    Pwd added and an attempt at a makefile in creation
+    
+    Co-authored-by: AFE123x <AFE123x@users.noreply.github.com>
+
+[33mcommit b5832414e14f869844820ba92d4c3347fd05fe79[m
+Author: Shadowkj1 <keshankkj@gmail.com>
+Date:   Tue Apr 2 21:10:18 2024 -0400
+
+    *minor* directory chars added
+
+[33mcommit ed91c8775eff3b7c1e6244b68443a50cd3530aea[m
+Author: Shadowkj1 <keshankkj@gmail.com>
+Date:   Tue Apr 2 19:41:23 2024 -0400
+
+    minor updates to notes and primary directories for searching added to mysh.c
+
+[33mcommit 14d05d70608605dac8df4c0d8c54c63df2bb708a[m
+Author: Shadowkj1 <keshankkj@gmail.com>
+Date:   Tue Apr 2 18:58:28 2024 -0400
+
+    Included the PDF itself
+
+[33mcommit d135fc76446e809a5b788bef1830060a8156d87c[m
+Author: Shadowkj1 <keshankkj@gmail.com>
+Date:   Tue Apr 2 18:57:08 2024 -0400
+
+    Document Summarized and put in the Notes
+
+[33mcommit c7733d5be0ed58b3cc4ecc464869230d41b0be9b[m
+Author: Shadowkj1 <keshankkj@gmail.com>
+Date:   Mon Apr 1 21:03:39 2024 -0400
+
+    Co-authored-by: AFE123x <AFE123x@users.noreply.github.com>
+
+[33mcommit bf10ab5155f126c3b7bbd613eb8031230f0367a9[m
+Author: AFE123x <arunf400@gmail.com>
+Date:   Mon Apr 1 17:32:41 2024 -0400
+
+     modified:   P3/mysh.c
+            modified:   P3/parser
+            modified:   P3/parser.c
+            modified:   P3/queue.c
+
+[33mcommit 6d19c66702696f5ae73660ce26b44c802fdbbc70[m
+Author: AFE123x <arunf400@gmail.com>
+Date:   Mon Apr 1 14:50:10 2024 -0400
+
+     P3/mysh -> P3/parser
+            new file:   P3/parser.c
+            new file:   P3/queue.c
+            new file:   P3/queue.h
+            new file:   test/a.out
+            new file:   test/parser
+            new file:   test/parser.s
+            new file:   test/parserexit
+
+[33mcommit 95d55106a21ed9eb8398c0916b0a89d94478cb58[m
+Author: AFE123x <arunf400@gmail.com>
+Date:   Sat Mar 30 19:29:39 2024 -0400
+
+    updated main function
+
+[33mcommit 4203d3828cacd3755ff00b05bbb34c0871c2ce96[m
+Author: Shadowkj1 <keshankkj@gmail.com>
+Date:   Sat Mar 30 15:57:37 2024 -0400
+
+    added authors to readme
+
+[33mcommit 6cf351cd80b6911608c890489058a8cf08988dd9[m
+Author: Shadowkj1 <keshankkj@gmail.com>
+Date:   Sat Mar 30 15:55:36 2024 -0400
+
+    more basic file creation
+
+[33mcommit f9d4916363b818cb50424c284dc8adab6f6607cb[m
+Author: Shadowkj1 <keshankkj@gmail.com>
+Date:   Fri Mar 29 18:27:54 2024 -0400
+
+    writeup added
+
+[33mcommit 59f57abfce116e577be1f4e344bbcffcc0de1429[m
+Author: AFE123x <121839885+AFE123x@users.noreply.github.com>
+Date:   Sun Mar 24 19:43:14 2024 -0400
+
+    Initial commit
