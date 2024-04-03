@@ -6,7 +6,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <limits.h>
-
+#include <sys/types.h>
 
 
 #include "./parser.h"
@@ -37,20 +37,27 @@ void cd(const char *path) {
         perror("cd");
     }
 }
-
-int search_directory(const char *path, const char *program) {
+char* mystrdup(char* word){
+    unsigned length = strlen(word);
+    char* toreturn = (char*)malloc(sizeof(char) * length + 1);
+    strcpy(toreturn,word);
+    return toreturn;
+}
+char* search_directory(const char *path, const char *program) {
     if(DEBUG){
         write(STDOUT_FILENO,path,strlen(path));
         write(STDOUT_FILENO,"\n",1);
     }
-    DIR *directory;
+
+    char* toreturn = NULL;
+    DIR* directory;
     struct dirent *entry;
     struct stat info;
 
     directory = opendir(path);
     if (directory == NULL) {
         perror("opendir");
-        return -1;
+        return toreturn;
     }
 
     while ((entry = readdir(directory)) != NULL) {
@@ -64,29 +71,31 @@ int search_directory(const char *path, const char *program) {
         if (strcmp(entry->d_name, program) == 0) {
             write(STDOUT_FILENO, full_path, strlen(full_path));
             write(STDOUT_FILENO, "\n", 1); // Add newline
+            toreturn = mystrdup(full_path);
             closedir(directory); // Close directory since program is found
-            return 0; // Exit the function
+            return toreturn; // Exit the function
         }
     }
 
     // Close the directory
     closedir(directory);
-    return 1;
+    return toreturn;
 }
 
-void which(const char *program) {
-    int toreturn = 0;
+char* which(const char *program) {
+    char* toreturn = NULL;
     if (!DEBUG) {
         toreturn = search_directory(DirectoryOne, program);
-        if (toreturn != 0) {
+        if (toreturn == NULL) {
             toreturn = search_directory(DirectoryTwo, program);
-            if (toreturn != 0) {
+            if (toreturn == NULL) {
                 toreturn = search_directory(DirectoryThree, program);
             }
         }
     } else {
         search_directory(".", program);
     }
+    return toreturn;
 }
 
 //prints the working directory
@@ -113,8 +122,18 @@ void shell_exit() {
 ////////////////////////
 
 //function that runs programs with fork
-void run_program(char* program) {
-
+void run_program(char** program) {
+    pid_t p = fork();
+    if(p == 0){
+        char* executable = which(program[0]);
+        execv(executable,program);
+        free(executable);
+        perror("error");
+    }
+    else{
+        wait(NULL);
+    
+    }
 
 
 }
@@ -156,10 +175,13 @@ int main (int argc, char** argv) {
             } else if (!strcmp(joever[0], "cd")) {
             cd(joever[1]);
             } else if (!strcmp(joever[0], "which")) {
-            which(joever[1]);
+            char* react = which(joever[1]);
             } else if (!strcmp(joever[0], "pwd")) {
             pwd();
-        }
+            }
+            else{
+                run_program(joever);
+            }
 
             //if first entry matches programs in directories
             //not a built in command
