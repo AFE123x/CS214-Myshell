@@ -42,7 +42,8 @@ void splitInput(char* input, char** args, int* arg_count) {
 struct data* capygetline(int fd){
     char buffer[1024];
     memset(buffer,0,1024);
-    int boi = read(STDIN_FILENO,buffer,1024);
+    write(STDOUT_FILENO,"mysh> ",6);
+    int boi = read(fd,buffer,1024);
     char** myarray = malloc(sizeof(char*) * 100);
     int length;
     splitInput(buffer,myarray,&length);

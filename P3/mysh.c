@@ -27,23 +27,14 @@ void cd(const char *path) {
     }
 }
 
-// Function to implement ls command
-// we do not need to implement ls
-void ls() {
-    DIR *dir;
-    struct dirent *entry;
+//prints the path mysh will use for a given program
+//will only print something IF the program is found
+//will not print if the program is built-in or if the program is not found
+void which(char* program) {
+    char *pathnames[] = {"/usr/local/bin", "/usr/bin", "/bin"};
 
-    if ((dir = opendir(".")) == NULL) {
-        perror("ls");
-        return;
-    }
-
-    while ((entry = readdir(dir)) != NULL) {
-        printf("%s\n", entry->d_name);
-    }
-
-    closedir(dir);
 }
+
 
 //prints the working directory
 void pwd() {
@@ -65,26 +56,34 @@ void pwd() {
 
 //quits the shell program
 void shell_exit() {
-
-
+    write(STDOUT_FILENO,"goodbye\n",8);
+    exit(0);
 }
 ////////////////////////
 
 int main (int argc, char** argv) {
-    printf("you are in mysh");
-    while(1){ 
+    // write(STDOUT_FILENO, "Hewwo\n", 7);
+
+    //Enter Batch Mode
+    if ((!isatty(STDIN_FILENO) && argc == 1) || argc == 2) {
+        printf("I am in batch mode?!?!?!");
+    }
+    
+    //Enter Interactive Mode
+    if(argc == 1 && isatty(STDIN_FILENO)) {
+        write(STDOUT_FILENO,"Welcome to my fiendish little bomb\n",36);
+        while(1){ 
         struct data* capybara = capygetline(STDIN_FILENO);
         int data = capybara->size;
         char** joever = capybara->myarray;
-        //for(int i = 0; i < data; i++){
-        //    write(STDOUT_FILENO,joever[i],strlen(joever[i]));
-        //    write(STDOUT_FILENO,"\n",1);
-        //}
-        if(!strcmp(joever[0],"ls")) ls();
+        if(!strcmp(joever[0],"exit")) shell_exit();
         if(!strcmp(joever[0],"cd")) cd(joever[1]);
+        if(!strcmp(joever[0],"which")) which(joever[1]);
         free(joever);
         free(capybara);
     }
+    }
+
     return 0;
 }
 // @@@@@@@@@@@@@@@@@@@@@ &&%%%%%%&&...&&   .,#%%%%%%%%%%%@     .....%@@@@@@@@@@@@@@
