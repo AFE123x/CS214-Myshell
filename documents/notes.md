@@ -424,3 +424,5 @@ $ which gedit
 For more information, see the man page for which. You can even use which in your shell, once you have determined its full path (type which which in a system terminal to find its full path)!
 
 
+termios/.h in raw mode
+call read with 1 byte at a time. then you can use autocomplete. could then also do arrow keys and etc. would makr it a lot more work
