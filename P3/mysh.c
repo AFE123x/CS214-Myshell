@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <sys/types.h>
-
+#include <signal.h>
 
 #include "./parser.h"
 
@@ -43,7 +43,7 @@ char* mystrdup(char* word){
     strcpy(toreturn,word);
     return toreturn;
 }
-char* search_directory(const char *path, const char *program) {
+char* search_directory(const char *path, const char *program, char flag) {
     if(DEBUG){
         write(STDOUT_FILENO,path,strlen(path));
         write(STDOUT_FILENO,"\n",1);
@@ -69,8 +69,10 @@ char* search_directory(const char *path, const char *program) {
             continue;
 
         if (strcmp(entry->d_name, program) == 0) {
+            if(flag){
             write(STDOUT_FILENO, full_path, strlen(full_path));
             write(STDOUT_FILENO, "\n", 1); // Add newline
+            }
             toreturn = mystrdup(full_path);
             closedir(directory); // Close directory since program is found
             return toreturn; // Exit the function
@@ -82,18 +84,18 @@ char* search_directory(const char *path, const char *program) {
     return toreturn;
 }
 
-char* which(const char *program) {
+char* which(const char *program, char flag) {
     char* toreturn = NULL;
     if (!DEBUG) {
-        toreturn = search_directory(DirectoryOne, program);
+        toreturn = search_directory(DirectoryOne, program, flag);
         if (toreturn == NULL) {
-            toreturn = search_directory(DirectoryTwo, program);
+            toreturn = search_directory(DirectoryTwo, program, flag);
             if (toreturn == NULL) {
-                toreturn = search_directory(DirectoryThree, program);
+                toreturn = search_directory(DirectoryThree, program, flag);
             }
         }
     } else {
-        search_directory(".", program);
+        search_directory(".", program, flag);
     }
     return toreturn;
 }
@@ -125,7 +127,7 @@ void shell_exit() {
 void run_program(char** program) {
     pid_t p = fork();
     if(p == 0){
-        char* executable = which(program[0]);
+        char* executable = which(program[0],0);
         execv(executable,program);
         free(executable);
         perror("error");
@@ -138,7 +140,10 @@ void run_program(char** program) {
 
 }
 
-
+void goodbye(){
+    write(STDOUT_FILENO,"\nYou pressed control + c, goodbye!\n",strlen("\nYou pressed control + c, goodbye!\n"));
+    exit(0);
+}
 int main (int argc, char** argv) {
     //need the values for the first round so batch mode can grab from it
     // struct data* capybara = capygetline(STDIN_FILENO);
@@ -146,6 +151,7 @@ int main (int argc, char** argv) {
     // char** joever = capybara->myarray;
 
     //Enter Batch Mode
+    signal(SIGINT, goodbye);
     if ((!isatty(STDIN_FILENO) && argc == 1) || argc == 2) {
         printf("I am in batch mode?!?!?!");
         //attempt to open file and see if it exits
@@ -175,7 +181,7 @@ int main (int argc, char** argv) {
             } else if (!strcmp(joever[0], "cd")) {
             cd(joever[1]);
             } else if (!strcmp(joever[0], "which")) {
-            char* react = which(joever[1]);
+            char* react = which(joever[1],1);
             } else if (!strcmp(joever[0], "pwd")) {
             pwd();
             }
