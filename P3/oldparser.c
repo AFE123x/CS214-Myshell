@@ -1,5 +1,5 @@
 
-#Include<fcntl.h>
+#include<fcntl.h>
 #include<unistd.h>
 #include<string.h>
 #include "./parser.h"

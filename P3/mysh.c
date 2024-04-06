@@ -258,36 +258,42 @@ int main (int argc, char** argv) {
         //attempt to open file and see if it exits
         int file;
         file = open(argv[1], O_RDONLY);
-
+        parserconstruct(file);
         if (file==-1) {
             perror(argv[1]);
         }
 
 
 
-    }
-    
+    } 
     //Enter Interactive Mode
     if(argc == 1 && isatty(STDIN_FILENO)) {
         //print the welcome statement for interactive mode
         write(STDOUT_FILENO,"Welcome to my fiendish little bomb\n",36);
         //have a loop for our shell
+
+        parserconstruct(STDIN_FILENO);
         while(1){ 
-            struct data* capybara = capygetline(STDIN_FILENO);
-            int data = capybara->size;
-            char** joever = capybara->myarray;
+            write(STDOUT_FILENO,"mysh>",5);
+            char* commands = readline();
+            int numberofcommands = 0;
+            char* mycommand = " ";
+            char* commandlist[100];
+            memset(commandlist,0,sizeof(commandlist));
+            splitInput(commands, commandlist, &numberofcommands);
             //if first entry matches built in commands
-            if (!strcmp(joever[0], "exit")) {
+
+            if (!strcmp(commandlist[0], "exit")) {
             shell_exit();
-            } else if (!strcmp(joever[0], "cd")) {
-            cd(joever[1]);
-            } else if (!strcmp(joever[0], "which")) {
-            char* react = which(joever[1],1);
-            } else if (!strcmp(joever[0], "pwd")) {
+            } else if (!strcmp(commandlist[0], "cd")) {
+            cd(commandlist[1]);
+            } else if (!strcmp(commandlist[0], "which")) {
+            char* react = which(commandlist[1],1);
+            } else if (!strcmp(commandlist[0], "pwd")) {
             pwd();
             }
             else{
-                run_program(joever);
+                run_program(commandlist);
             }
 
             //if first entry matches programs in directories
@@ -298,8 +304,10 @@ int main (int argc, char** argv) {
             //does not match built-in commands nor found through traversal
 
 
-            free(joever);
-            free(capybara);
+
+
+
+            free(commands);
         }
     }
 

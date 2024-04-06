@@ -1,13 +1,46 @@
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include<stdio.h>
+int fd = -1;
+char wasopened = 1;
+char aoeustdin = 0;
 
-#include<fcntl.h>
-#include<unistd.h>
-#include<string.h>
-#include "./parser.h"
 /**
- *this function will split the input string into an array of words. 
- *@arg input string we're splitting
- *
+ *  this is our function that'll read one line from the fd specified by the user
  */
+char* readline() {
+    if(fd == -1){
+        write(STDERR_FILENO,"Error: file descriptor not specified\n",strlen("Error: file descriptor not specified\n"));
+        return NULL;
+    }
+    char buf;
+    char* buffer = calloc(sizeof(char), 100);
+    if (buffer == NULL) {
+        write(STDERR_FILENO,"Memory allocation failed",25);
+        return NULL;
+    }
+    
+
+    size_t bytesRead;
+    bytesRead = read(fd, buffer, 100);
+
+    if (bytesRead == 0) {
+        free(buffer);
+        return NULL; // Return NULL if end of file is reached
+    }
+    return buffer;
+}
+
+char* mystrdup2(char* str){
+    unsigned int length = strlen(str);
+    char* toreturn = calloc(sizeof(char) , length + 1);
+    strcpy(toreturn,str);
+    return toreturn;
+}
+//char** tokenize_string(char *str, const char *delim, int *num_tokens)
+
 void splitInput(char* input, char** args, int* arg_count) {
     *arg_count = 0;
     int in_quotes = 0; // Flag to track whether we are inside quotes
@@ -39,16 +72,13 @@ void splitInput(char* input, char** args, int* arg_count) {
     args[*arg_count] = NULL;
 }
 
-struct data* capygetline(int fd){
-    char buffer[1024];
-    memset(buffer,0,1024);
-    write(STDOUT_FILENO,"mysh> ",6);
-    int boi = read(fd,buffer,1024);
-    char** myarray = malloc(sizeof(char*) * 100);
-    int length;
-    splitInput(buffer,myarray,&length);
-    struct data* toreturn = malloc(sizeof(struct data));
-    toreturn->myarray = myarray;
-    toreturn->size = length;
-    return toreturn;
+void parserconstruct(int ofd) {
+    
+    fd = dup(ofd);
+    if(fd == STDIN_FILENO){
+        aoeustdin = 1;
+    }
+
+
 }
+
