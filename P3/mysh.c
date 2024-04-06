@@ -127,7 +127,9 @@ void shell_exit() {
 //function that runs programs with fork
 void run_program(char** program) {
     pid_t p;
-    int run_status;
+    // short pipe_status = 0;
+    // short pipe_index = 0;
+
 
     //check how many arguments were passed in
     short argc = 0;
@@ -136,17 +138,39 @@ void run_program(char** program) {
     }
     //now we know how many arguments we have in case of a wildcard
 
+    //print the number of arguments
+    //printf("\n\n\n\nargc: %d\n", argc);
+
+    //check if a pipe exists in the array
+    // for (int i = 0; i < argc; i++) {
+    //     if (strcmp(program[i], "|") == 0) {
+    //         pipe_status = 1;
+    //         pipe_index = i;
+    //     }
+    // }
+
+
+
+
     //check if wildcard was passed in
     int wildcard_status = 0;
     for (int i = 1; i < argc; i++) {
         //check if the wild card is found in the argument
         if (strchr(program [i], '*') != NULL) {
             wildcard_status = 1;
-            //if the wildcard is found jump out of the loop
-            //honestly we dont really need to "jump" out but but whatever
             break;
         }
+    } 
+    //now check if that wildcard is a bluff. I could put this in the above loop but I am lazy
+    //(check if the glob count is 0)
+    if (wildcard_status) {
+        glob_t globbycheck;
+        if (globbycheck.gl_pathc == 0) {
+                wildcard_status = 0;
+        }
+        globfree(&globbycheck);
     }
+
 
     //when there is no wildcard run the program normally with fork
     //wildcard = 0
@@ -251,7 +275,7 @@ int main (int argc, char** argv) {
     // char** joever = capybara->myarray;
 
     //Enter Batch Mode
-    // Pee in my pants
+    //Pee in my pants
     signal(SIGINT, goodbye);
     if ((!isatty(STDIN_FILENO) && argc == 1) || argc == 2) {
         printf("I am in batch mode?!?!?!");

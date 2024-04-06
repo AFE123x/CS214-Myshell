@@ -3,10 +3,15 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 int main(int argc, char** argv) {
+    //create an int array to store the file descriptors
     int fds[2];
+    //create a pipe
     pipe(fds);
+    //create a child process
     pid_t process = fork();
+    //create a temp process to store the stdout file descriptor
     pid_t tempproc = dup(STDOUT_FILENO);
+
 
     if (process == 0) {
         dup2(fds[1], STDOUT_FILENO);
