@@ -127,8 +127,12 @@ void shell_exit() {
 //function that runs programs with fork
 void run_program(char** program) {
     pid_t p;
-    // short pipe_status = 0;
-    // short pipe_index = 0;
+     short pipe_status = 0;
+     short pipe_index = 0;
+    
+    //gotta have detection for "|", "<", and ">"
+    //and values to hold their locations
+    
 
 
     //check how many arguments were passed in
@@ -142,12 +146,12 @@ void run_program(char** program) {
     //printf("\n\n\n\nargc: %d\n", argc);
 
     //check if a pipe exists in the array
-    // for (int i = 0; i < argc; i++) {
-    //     if (strcmp(program[i], "|") == 0) {
-    //         pipe_status = 1;
-    //         pipe_index = i;
-    //     }
-    // }
+    for (int i = 0; i < argc; i++) {
+        if (strcmp(program[i], "|") == 0) {
+            pipe_status = 1;
+            pipe_index = i;
+        }
+    }
 
 
 
@@ -165,7 +169,9 @@ void run_program(char** program) {
     //(check if the glob count is 0)
     if (wildcard_status) {
         glob_t globbycheck;
+        glob(program[1], GLOB_ERR, NULL, &globbycheck);
         if (globbycheck.gl_pathc == 0) {
+            //printf("No matching files found\n");
                 wildcard_status = 0;
         }
         globfree(&globbycheck);
