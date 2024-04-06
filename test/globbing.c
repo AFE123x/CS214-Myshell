@@ -14,8 +14,11 @@ int main() {
     
     glob_t globbuf;
 
-    glob("*.c", 0, NULL, &globbuf);
+    glob("*.o", 0, NULL, &globbuf);
 
+    //print the glob count
+
+    printf("\nglob count is: %ld\n", globbuf.gl_pathc);
     // Print the matched files
     for (int i = 0; i < globbuf.gl_pathc; i++) {
         printf("%s\n", globbuf.gl_pathv[i]);
