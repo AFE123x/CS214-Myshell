@@ -95,7 +95,12 @@ char* search_directory(const char *path, const char *program, char flag) {
     closedir(directory);
     return toreturn;
 }
-
+char hasredirection(char** array, int numargs){
+    for(int i = 0; i < numargs; i++){
+        if(!strcmp(array[i],"|") || !strcmp(array[i],">") || !strcmp(array[i],"<")) return 1;
+    }
+    return 0;
+}
 char* which(const char *program, char flag) {
     char* toreturn = NULL;
     if (!DEBUG) {
@@ -140,6 +145,7 @@ void run_program(char** program) {
     pid_t p;
     //gotta have detection for "|", "<", and ">"
     //and values to hold their locations
+<<<<<<< Updated upstream
     //if a pipe exists in the array
     short pipe_status = 0;
     //if a pipe exists, this is the pipes location
@@ -153,6 +159,9 @@ void run_program(char** program) {
     //if a output redirect exists, this is the location
     short output_index = 0;
     
+=======
+
+>>>>>>> Stashed changes
 
     //just a check to see what which returns
     // char* react = which(program[0],0);
@@ -163,6 +172,9 @@ void run_program(char** program) {
     short argc = 0;
     while (program[argc] != NULL) {
         argc++;
+    }
+    if(hasredirection(program,argc)){
+		
     }
     //now we know how many arguments we have in case of a wildcard
 
