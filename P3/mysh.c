@@ -38,29 +38,38 @@ void cd(const char *path) {
         perror("cd");
     }
 }
+
 char* mystrdup(char* word){
     unsigned length = strlen(word);
     char* toreturn = (char*)malloc(sizeof(char) * length + 1);
     strcpy(toreturn,word);
     return toreturn;
 }
+//searches the directory for the given program with the provided path
 char* search_directory(const char *path, const char *program, char flag) {
     if(DEBUG){
         write(STDOUT_FILENO,path,strlen(path));
         write(STDOUT_FILENO,"\n",1);
     }
-
+    //will hold the path to the program if found
     char* toreturn = NULL;
+    //stores the directory as a directory stream object
     DIR* directory;
+    //stores the entry of the directory
     struct dirent *entry;
+    //stores the information of the file
     struct stat info;
 
+    //open the directory with the given path
     directory = opendir(path);
+
+    //check if the directory is NULL
     if (directory == NULL) {
         perror("opendir");
         return toreturn;
     }
 
+    //attempt traversal of the directory
     while ((entry = readdir(directory)) != NULL) {
         char full_path[BUFFER_SIZE];
         strcpy(full_path, path);
@@ -69,11 +78,13 @@ char* search_directory(const char *path, const char *program, char flag) {
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
             continue;
 
+        // Once the correct directory is found, proceed to saving the program path
         if (strcmp(entry->d_name, program) == 0) {
             if(flag){
             write(STDOUT_FILENO, full_path, strlen(full_path));
             write(STDOUT_FILENO, "\n", 1); // Add newline
             }
+            //save the path to the program
             toreturn = mystrdup(full_path);
             closedir(directory); // Close directory since program is found
             return toreturn; // Exit the function
@@ -127,12 +138,25 @@ void shell_exit() {
 //function that runs programs with fork
 void run_program(char** program) {
     pid_t p;
-     short pipe_status = 0;
-     short pipe_index = 0;
-    
     //gotta have detection for "|", "<", and ">"
     //and values to hold their locations
+    //if a pipe exists in the array
+    short pipe_status = 0;
+    //if a pipe exists, this is the pipes location
+    short pipe_index = 0;
+    //if a input redirect exists in the array
+    short input_status = 0;
+    //if a input redirect exists, this is the location
+    short input_index = 0;
+    //if a output redirect exists in the array
+    short output_status = 0;
+    //if a output redirect exists, this is the location
+    short output_index = 0;
     
+
+    //just a check to see what which returns
+    // char* react = which(program[0],0);
+    // printf("This is the react: %s\n", react);
 
 
     //check how many arguments were passed in
@@ -145,16 +169,27 @@ void run_program(char** program) {
     //print the number of arguments
     //printf("\n\n\n\nargc: %d\n", argc);
 
-    //check if a pipe exists in the array
+    //check if a pipe or redirects exist in the array
     for (int i = 0; i < argc; i++) {
-        if (strcmp(program[i], "|") == 0) {
-            pipe_status = 1;
-            pipe_index = i;
+        if (i > 0) {
+            //check if the current argument is a pipe, input redirect, or output redirect
+            //if it is, set the status to 1 and store the index
+            if ((strcmp(program[i], "|")) == 0) {
+                pipe_status = 1;
+                pipe_index = i;
+            } else if ((strcmp(program[i], "<")) == 0) {
+                input_status = 1;
+                input_index = i;
+            } else if ((strcmp(program[i], ">")) == 0) {
+                output_status = 1;
+                output_index = i;
+            }
         }
+        // if (((strcmp(program[i], "|")) == 0) || ((strcmp(program[i], "<")) == 0) || ((strcmp(program[i], ">")) == 0)) {
+        //     pipe_status = 1;
+        //     pipe_index = i;
+        // }
     }
-
-
-
 
     //check if wildcard was passed in
     int wildcard_status = 0;
@@ -177,6 +212,8 @@ void run_program(char** program) {
         globfree(&globbycheck);
     }
 
+
+    //if a pipe exists, run the program with a pipe
 
     //when there is no wildcard run the program normally with fork
     //wildcard = 0
