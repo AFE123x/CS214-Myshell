@@ -1,4 +1,0 @@
-echo hello
-echo goodbye
-echo huh?
-echo woah
