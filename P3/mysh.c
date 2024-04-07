@@ -94,6 +94,12 @@ char* search_directory(const char *path, const char *program, char flag) {
     return toreturn;
 }
 
+/**
+* Performs which, checking specific directories for the program
+* @arg program - a string containing the program name
+* @arg flag - set to 0 if you don't want directory printed, not 0 otherwise. 
+* @return a string containing the full filepath. 
+*/
 char* which(const char *program, char flag) {
     char* toreturn = NULL;
     if (!DEBUG) {
@@ -138,83 +144,118 @@ int hasredirection(char** array, int numargs){
     }
     return -1;
 }
-int handleredirection(char** commandlist,int numargs,int location){
-	if(location >= numargs - 1 || location < 1){
-		char* errorstring = "Error: improper redirect location\n";
-		write(STDERR_FILENO,errorstring,strlen(errorstring));
-		return -1;
-	} 
-	if(strcmp(commandlist[location],"<") == 0){
-		char* commands[location + 1];
-		for(int i = 0; i < location; i++){
-			commands[i] = commandlist[i];
-		}
-		commands[location] = NULL;
-		int inputfd = open(commandlist[location + 1],O_RDONLY);
-		if(inputfd == -1){
-			perror("error");
-			return -1;
-		}
-		return execute_command(commands,inputfd,STDOUT_FILENO);
-	} // ./capy arg1 arg2 > output.txt				and numargs will be 5
-	 //    0     1    2   3     4 
-	else if(strcmp(commandlist[location],">") == 0){
-		int arraysize = (numargs - location) + 2;
-		char* commands[arraysize];
-		for(int i = 0; i < arraysize - 1; i++){
-		commands[i] = commandlist[i];
-		}
-		commands[arraysize - 1] = NULL;
-		write(STDOUT_FILENO,commands[location + 1],strlen(commands[location + 1]));
-		write(STDOUT_FILENO,"\n",1);
-		int outputfd = open(commands[location + 1], O_CREAT | O_TRUNC | O_WRONLY, 0640);
-		if(outputfd == -1){
-			perror("");
-			return -1;
-		}
-		return execute_command(commands,STDIN_FILENO,outputfd);
-	}
-	else { 
-		// ./capy arg1 arg2 arg3 | grep arg1 arg2 arg3 arg4 
-		//    0    1    2    3   4  5    6    7    8     9   numargs 10
-		int pipefd[2];
-		pipe(pipefd);
-		int numargsize = location + 1;
-		
-		// Populates left arguments
-		char* leftargs[numargsize];
-		for(int i = 0; i < numargsize; i++){
-			leftargs[i] = commandlist[i];
-		}
-		leftargs[numargsize - 1] = NULL;
-		
-		// Populates right arguments
-		numargsize = numargs - location;
-		char* rightargs[numargsize];
-		for(int i = location + 1; i < numargs; i++){
-			rightargs[i - location - 1] = commandlist[i];
-		}
-		rightargs[numargsize - 1] = NULL;
-		
-		int toreturn;
-		
-		// Execute left command
-		toreturn = execute_command(leftargs, STDIN_FILENO, pipefd[1]);
-		close(pipefd[1]);
-		
-		// Execute right command
-		toreturn = execute_command(rightargs, pipefd[0], STDOUT_FILENO);
-		close(pipefd[0]);
-		
-		return toreturn;
-	}
+int handleredirection(char** commandlist, int numargs, int location) {
+    if (location >= numargs - 1 || location < 1) {
+        char* errorstring = "Error: improper redirect location\n";
+        write(STDERR_FILENO, errorstring, strlen(errorstring));
+        return -1;
+    }
 
+    if (strcmp(commandlist[location], "<") == 0) {
+        char* commands[location + 1];
+        char* newfilepath = which(commandlist[0], 0);
+        if (newfilepath != NULL) {
+            commands[0] = newfilepath;
+        } else {
+            commands[0] = commandlist[0];
+        }
+        free(newfilepath);
+        for (int i = 1; i < location; i++) {
+            commands[i] = commandlist[i];
+        }
+        commands[location] = NULL;
+        int inputfd = open(commandlist[location + 1], O_RDONLY);
+        if (inputfd == -1) {
+            perror("error");
+            return -1;
+        }
+        int statuscode = execute_command(commands, inputfd, STDOUT_FILENO);
+		if(newfilepath != NULL) free(newfilepath);
+		return statuscode;
+    } else if (strcmp(commandlist[location], ">") == 0) {
+ 
+	  char* commands[location + 1];
+	  char* mycommands = which(commandlist[0],0);
+	  if(mycommands != NULL){
+		commands[0] = mycommands;
+	  }
+	  else{
+		  commands[0] = commandlist[0];
+	  }
+	  for(int i = 1; i < location; i++){
+		commands[i] = commandlist[i];
+	  }
+	  commands[location] = NULL;
+	  int outputfd = open(commandlist[location + 1],O_CREAT | O_TRUNC | O_WRONLY,0640);
+	  if(outputfd == -1){
+		perror("");
+		return -1;
+	  }
+	  int statuscode = execute_command(commands,STDIN_FILENO,outputfd);
+	  if(mycommands != NULL) free(mycommands);
+	  
+    } else { 
+        // Pipe case
+        int pipefd[2];
+        pipe(pipefd);
+        int numargsize = location + 1;
+        
+        // Populate left arguments
+        char* leftargs[numargsize];
+        for (int i = 0; i < numargsize; i++) {
+            leftargs[i] = commandlist[i];
+        }
+        leftargs[numargsize - 1] = NULL;
+        
+        // Populate right arguments
+        numargsize = numargs - location - 1;
+        char* rightargs[numargsize];
+        for (int i = location + 1; i < numargs; i++) {
+            rightargs[i - location - 1] = commandlist[i];
+        }
+        rightargs[numargsize - 1] = NULL;
+        
+        int toreturn;
+        
+        // Execute left command
+        toreturn = execute_command(leftargs, STDIN_FILENO, pipefd[1]);
+        close(pipefd[1]);
+        
+        // Execute right command
+        toreturn = execute_command(rightargs, pipefd[0], STDOUT_FILENO);
+        close(pipefd[0]);
+        
+        return toreturn;
+    }
 }
 //function that runs programs with fork -> check myshbak.c
 int run(char** commandlist, int numargs){
 	int checkboi = hasredirection(commandlist,numargs);
 	if(checkboi != -1){
 		return handleredirection(commandlist,numargs,checkboi);
+	}
+	char* myarray[numargs + 1];
+	char* returnpath = which(commandlist[0],0);
+	if(returnpath != NULL){
+		myarray[0] = returnpath;
+	}
+	else{
+		myarray[0] = commandlist[0];
+	}
+	for(int i = 1; i < numargs; i++){
+		myarray[i] = commandlist[i];
+	}
+	myarray[numargs] = NULL;
+	pid_t process = fork();
+	if(!process){
+		execv(myarray[0],myarray);
+		
+	}
+	else{
+		int statusnum;
+		waitpid(process,&statusnum,0);
+		if(returnpath != NULL) free(returnpath);
+		return statusnum;
 	}
 }
 void goodbye(){
