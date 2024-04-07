@@ -95,11 +95,11 @@ char* search_directory(const char *path, const char *program, char flag) {
     closedir(directory);
     return toreturn;
 }
-char hasredirection(char** array, int numargs){
+unsigned int hasredirection(char** array, int numargs){
     for(int i = 0; i < numargs; i++){
-        if(!strcmp(array[i],"|") || !strcmp(array[i],">") || !strcmp(array[i],"<")) return 1;
+        if(!strcmp(array[i],"|") || !strcmp(array[i],">") || !strcmp(array[i],"<")) return i;
     }
-    return 0;
+    return -1;
 }
 char* which(const char *program, char flag) {
     char* toreturn = NULL;
@@ -145,7 +145,6 @@ void run_program(char** program) {
     pid_t p;
     //gotta have detection for "|", "<", and ">"
     //and values to hold their locations
-<<<<<<< Updated upstream
     //if a pipe exists in the array
     short pipe_status = 0;
     //if a pipe exists, this is the pipes location
@@ -158,10 +157,6 @@ void run_program(char** program) {
     short output_status = 0;
     //if a output redirect exists, this is the location
     short output_index = 0;
-    
-=======
-
->>>>>>> Stashed changes
 
     //just a check to see what which returns
     // char* react = which(program[0],0);
@@ -173,34 +168,13 @@ void run_program(char** program) {
     while (program[argc] != NULL) {
         argc++;
     }
-    if(hasredirection(program,argc)){
-		
-    }
-    //now we know how many arguments we have in case of a wildcard
-
-    //print the number of arguments
-    //printf("\n\n\n\nargc: %d\n", argc);
-
-    //check if a pipe or redirects exist in the array
-    for (int i = 0; i < argc; i++) {
-        if (i > 0) {
-            //check if the current argument is a pipe, input redirect, or output redirect
-            //if it is, set the status to 1 and store the index
-            if ((strcmp(program[i], "|")) == 0) {
-                pipe_status = 1;
-                pipe_index = i;
-            } else if ((strcmp(program[i], "<")) == 0) {
-                input_status = 1;
-                input_index = i;
-            } else if ((strcmp(program[i], ">")) == 0) {
-                output_status = 1;
-                output_index = i;
-            }
-        }
-        // if (((strcmp(program[i], "|")) == 0) || ((strcmp(program[i], "<")) == 0) || ((strcmp(program[i], ">")) == 0)) {
-        //     pipe_status = 1;
-        //     pipe_index = i;
-        // }
+    if(hasredirection(program,argc) != -1){ //shows it has redirection.
+		pipe_status = 1;
+		pipe_index = hasredirection(program,argc);
+		char timmyepiccool[20];
+		int length = 0;
+		length = snprintf(timmyepiccool, sizeof(timmyepiccool), "%d", pipe_index);
+		write(STDOUT_FILENO,timmyepiccool,length);
     }
 
     //check if wildcard was passed in
@@ -261,8 +235,6 @@ void run_program(char** program) {
             exit(EXIT_FAILURE);
         }
 
-        //run the program for the amount of matching files there are
-        //I might need to make it where wildcards for stuff like ls doesnt work
         for (int i = 0; i < globby.gl_pathc; i++) {
             p = fork();
             if (p == -1){
@@ -279,10 +251,6 @@ void run_program(char** program) {
                 char* executable = which(program[0],0);
 
                 execv(executable,argv);
-                //print argv[1] to see if it is the correct file
-                // printf("\nThis is argv[0] during round %d: %s\n", i+1, argv[0]);
-                // printf("This is the program[0]: %s\n", program[0]);
-                // printf("\nThis is argv[1] during round %d: %s\n", i+1, argv[1]);
                 perror("execv");
                 exit(EXIT_FAILURE);
             } else {
@@ -293,30 +261,6 @@ void run_program(char** program) {
         //thats so cool that globs dynamically malloc themselves
         globfree(&globby);
     }
-
-
-
-//OLD CODE
-    // if(p == 0){
-    //     //check if the word contains an *
-    //     //if it does, we need to glob it
-    //     // if (program[1] != NULL && strchr(program[1], '*') != NULL) {
-    //     //     glob_t globbuf;
-    //     //     glob(program[0], 0, NULL, &globbuf);
-    //     //     program = globbuf.gl_pathv;
-    //     // } else {
-    //         char* executable = which(program[0],0);
-    //         execv(executable,program);
-    //         free(executable);
-    //         perror("error");
-    //     //}
-    // }
-    // else{
-    //     wait(NULL);
-    
-    // }
-//
-
 }
 
 void goodbye(){

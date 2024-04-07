@@ -1,0 +1,15 @@
+total 79
+-rw-r----- 1 ajf277 ajf277   494 Apr  6 00:59 globbing.c
+-rw-r----- 1 ajf277 ajf277     5 Apr  6 19:21 input.txt
+-rw-r----- 1 ajf277 ajf277    52 Apr  5 23:20 myshell.sh
+-rw-r----- 1 ajf277 ajf277    33 Apr  5 23:25 notEmpty.txt
+-rw-r----- 1 ajf277 ajf277     0 Apr  6 19:27 output.txt
+-rw-r----- 1 ajf277 ajf277  1023 Apr  1 14:26 parser.s
+-rw-r----- 1 ajf277 ajf277   774 Apr  6 00:59 piper.c
+-rwxr-x--- 1 ajf277 ajf277 20496 Apr  6 19:27 pipetests
+-rw-r----- 1 ajf277 ajf277  1489 Apr  6 19:27 pipetests.c
+-rwxr-x--- 1 ajf277 ajf277 16064 Apr  6 19:20 sum
+-rw-r----- 1 ajf277 ajf277   152 Apr  6 19:20 sum.c
+-rw-r----- 1 ajf277 ajf277    56 Apr  6 13:26 test.c
+-rw-r----- 1 ajf277 ajf277   127 Apr  5 23:25 textfile2.0.txt
+-rw-r----- 1 ajf277 ajf277  1405 Apr  3 01:20 which.c
