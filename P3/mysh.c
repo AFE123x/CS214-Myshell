@@ -1,10 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <dirent.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <limits.h>
 #include <sys/types.h>
 #include <signal.h>
@@ -12,6 +8,8 @@
 
 #include "./parser.h"
 
+//=======universal
+#include "./univ.h"
 
 #define BUFFER_SIZE 4096
 
@@ -95,12 +93,7 @@ char* search_directory(const char *path, const char *program, char flag) {
     closedir(directory);
     return toreturn;
 }
-unsigned int hasredirection(char** array, int numargs){
-    for(int i = 0; i < numargs; i++){
-        if(!strcmp(array[i],"|") || !strcmp(array[i],">") || !strcmp(array[i],"<")) return i;
-    }
-    return -1;
-}
+
 char* which(const char *program, char flag) {
     char* toreturn = NULL;
     if (!DEBUG) {
@@ -139,130 +132,91 @@ void shell_exit() {
     exit(0);
 }
 ////////////////////////
-
-//function that runs programs with fork
-void run_program(char** program) {
-    pid_t p;
-    //gotta have detection for "|", "<", and ">"
-    //and values to hold their locations
-    //if a pipe exists in the array
-    short pipe_status = 0;
-    //if a pipe exists, this is the pipes location
-    short pipe_index = 0;
-    //if a input redirect exists in the array
-    short input_status = 0;
-    //if a input redirect exists, this is the location
-    short input_index = 0;
-    //if a output redirect exists in the array
-    short output_status = 0;
-    //if a output redirect exists, this is the location
-    short output_index = 0;
-
-    //just a check to see what which returns
-    // char* react = which(program[0],0);
-    // printf("This is the react: %s\n", react);
-
-
-    //check how many arguments were passed in
-    short argc = 0;
-    while (program[argc] != NULL) {
-        argc++;
+int hasredirection(char** array, int numargs){
+    for(int i = 0; i < numargs; i++){
+        if(!strcmp(array[i],"|") || !strcmp(array[i],">") || !strcmp(array[i],"<")) return i;
     }
-    if(hasredirection(program,argc) != -1){ //shows it has redirection.
-		pipe_status = 1;
-		pipe_index = hasredirection(program,argc);
-		char timmyepiccool[20];
-		int length = 0;
-		length = snprintf(timmyepiccool, sizeof(timmyepiccool), "%d", pipe_index);
-		write(STDOUT_FILENO,timmyepiccool,length);
-    }
-
-    //check if wildcard was passed in
-    int wildcard_status = 0;
-    for (int i = 1; i < argc; i++) {
-        //check if the wild card is found in the argument
-        if (strchr(program [i], '*') != NULL) {
-            wildcard_status = 1;
-            break;
-        }
-    } 
-    //now check if that wildcard is a bluff. I could put this in the above loop but I am lazy
-    //(check if the glob count is 0)
-    if (wildcard_status) {
-        glob_t globbycheck;
-        glob(program[1], GLOB_ERR, NULL, &globbycheck);
-        if (globbycheck.gl_pathc == 0) {
-            //printf("No matching files found\n");
-                wildcard_status = 0;
-        }
-        globfree(&globbycheck);
-    }
-
-
-    //if a pipe exists, run the program with a pipe
-
-    //when there is no wildcard run the program normally with fork
-    //wildcard = 0
-    if (!wildcard_status) {
-        p = fork();
-        if (p == -1) {
-            perror("fork");
-            exit(EXIT_FAILURE);
-        } else if (p == 0) {
-            //run the child processs
-            char* executable = which(program[0],0);
-            //exit if the executable is NULL
-            if (executable == NULL) {
-                perror("Passed in executable is NULL\n");
-                exit(EXIT_FAILURE);
-            }
-            execv(executable,program);
-            perror("error");
-        } else {
-            wait(NULL);
-        }
-    } 
-    //run the parent
-    //wild card = 1
-    else {
-        //storing the results of the glob from the wildcard
-        glob_t globby;
-        
-        //do glob error handling
-        //if this returns 0 then we are good
-        if (glob(program[1], GLOB_ERR, NULL, &globby) != 0) {
-            perror("glob");
-            exit(EXIT_FAILURE);
-        }
-
-        for (int i = 0; i < globby.gl_pathc; i++) {
-            p = fork();
-            if (p == -1){
-                perror("fork");
-                exit(EXIT_FAILURE);
-            } else if (p == 0) { //run the child! 
-                char* argv[argc + 1];
-                argv[0] = program[0]; //the name of the program being stored in the array
-                //add the first matching name to the array
-                argv[1] = globby.gl_pathv[i];
-                argv[2] = NULL; //have a "null terminator" in the array
-
-                //find the program
-                char* executable = which(program[0],0);
-
-                execv(executable,argv);
-                perror("execv");
-                exit(EXIT_FAILURE);
-            } else {
-                wait(NULL);
-            }
-        }
-        //then we must free the glob we created
-        //thats so cool that globs dynamically malloc themselves
-        globfree(&globby);
-    }
+    return -1;
 }
+int handleredirection(char** commandlist,int numargs,int location){
+	if(location >= numargs - 1 || location < 1){
+		char* errorstring = "Error: improper redirect location\n";
+		write(STDERR_FILENO,errorstring,strlen(errorstring));
+		return -1;
+	} 
+	if(strcmp(commandlist[location],"<") == 0){
+		char* commands[location + 1];
+		for(int i = 0; i < location; i++){
+			commands[i] = commandlist[i];
+		}
+		commands[location] = NULL;
+		int inputfd = open(commandlist[location + 1],O_RDONLY);
+		if(inputfd == -1){
+			perror("error");
+			return -1;
+		}
+		return execute_command(commands,inputfd,STDOUT_FILENO);
+	} // ./capy arg1 arg2 > output.txt				and numargs will be 5
+	 //    0     1    2   3     4 
+	else if(strcmp(commandlist[location],">") == 0){
+		int arraysize = (numargs - location) + 2;
+		char* commands[arraysize];
+		for(int i = 0; i < arraysize - 1; i++){
+		commands[i] = commandlist[i];
+		}
+		commands[arraysize - 1] = NULL;
+		write(STDOUT_FILENO,commands[location + 1],strlen(commands[location + 1]));
+		write(STDOUT_FILENO,"\n",1);
+		int outputfd = open(commands[location + 1], O_CREAT | O_TRUNC | O_WRONLY, 0640);
+		if(outputfd == -1){
+			perror("");
+			return -1;
+		}
+		return execute_command(commands,STDIN_FILENO,outputfd);
+	}
+	else { 
+		// ./capy arg1 arg2 arg3 | grep arg1 arg2 arg3 arg4 
+		//    0    1    2    3   4  5    6    7    8     9   numargs 10
+		int pipefd[2];
+		pipe(pipefd);
+		int numargsize = location + 1;
+		
+		// Populates left arguments
+		char* leftargs[numargsize];
+		for(int i = 0; i < numargsize; i++){
+			leftargs[i] = commandlist[i];
+		}
+		leftargs[numargsize - 1] = NULL;
+		
+		// Populates right arguments
+		numargsize = numargs - location;
+		char* rightargs[numargsize];
+		for(int i = location + 1; i < numargs; i++){
+			rightargs[i - location - 1] = commandlist[i];
+		}
+		rightargs[numargsize - 1] = NULL;
+		
+		int toreturn;
+		
+		// Execute left command
+		toreturn = execute_command(leftargs, STDIN_FILENO, pipefd[1]);
+		close(pipefd[1]);
+		
+		// Execute right command
+		toreturn = execute_command(rightargs, pipefd[0], STDOUT_FILENO);
+		close(pipefd[0]);
+		
+		return toreturn;
+	}
 
+}
+//function that runs programs with fork -> check myshbak.c
+int run(char** commandlist, int numargs){
+	int checkboi = hasredirection(commandlist,numargs);
+	if(checkboi != -1){
+		return handleredirection(commandlist,numargs,checkboi);
+	}
+}
 void goodbye(){
     write(STDOUT_FILENO,"\nYou pressed control + c, goodbye!\n",strlen("\nYou pressed control + c, goodbye!\n"));
     exit(0);
@@ -285,9 +239,6 @@ int main (int argc, char** argv) {
         if (file==-1) {
             perror(argv[1]);
         }
-
-
-
     } 
     //Enter Interactive Mode
     if(argc == 1 && isatty(STDIN_FILENO)) {
@@ -316,7 +267,7 @@ int main (int argc, char** argv) {
             pwd();
             }
             else{
-                run_program(commandlist);
+                run(commandlist,numberofcommands);
             }
 
             //if first entry matches programs in directories

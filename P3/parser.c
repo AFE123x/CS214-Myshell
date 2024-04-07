@@ -1,8 +1,5 @@
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h>
 #include <string.h>
-#include<stdio.h>
+#include "./univ.h"
 int fd = -1;
 char wasopened = 1;
 char aoeustdin = 0;
