@@ -146,51 +146,99 @@ int haspipe(char** array, int numargs){
 	}
 	return -1;
 }
-int handlepiping(char** commandlist, int numargs, int location) {
-    int pipefd[2];
-    if (pipe(pipefd) == -1) {
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+
+int handlepiping(char** command_list, int num_args, int location) {
+    int pipe_fd[2];
+    if (pipe(pipe_fd) == -1) {
         perror("pipe");
         return -1;
     }
 	
     // Populate left arguments
-    char* leftargs[location + 1];
-	char* mystring = which(commandlist[0],0);
-	if(mystring != NULL){
-		leftargs[0] = mystring;
-	}
-	else{
-		leftargs[0] = commandlist[0];
-	}
+    char* left_args[location + 1];
+    char* my_string = which(command_list[0], 0);
+    if (my_string != NULL)
+        left_args[0] = my_string;
+    else
+        left_args[0] = command_list[0];
+    
     for (int i = 1; i < location; i++) {
-        leftargs[i] = commandlist[i];
+        left_args[i] = command_list[i];
     }
-    leftargs[location] = NULL;
-
+    left_args[location] = NULL;
+    
+    // Check for left redirection on left side (wouldn't exist on right side)
+    int left_redirect_index = hasredirection(left_args, location);
+    char has_left_redirection = 0; 
+    if (left_redirect_index != -1) {
+        has_left_redirection = 1;
+        if (strcmp(left_args[left_redirect_index], "<") == 0) {
+            int input_redir = open(left_args[left_redirect_index + 1], O_RDONLY);
+            if (input_redir == -1) {
+                perror("");
+                return -1;
+            }
+            left_args[left_redirect_index] = NULL;
+            execute_command(left_args, input_redir, pipe_fd[1]);
+        }
+    }
+    
     // Populate right arguments
-    char* rightargs[numargs - location];
-	mystring = which(commandlist[location + 1],0);
-	if(mystring != NULL){
-		rightargs[0] = mystring;
-	}
-	else{
-		rightargs[0] = commandlist[location+1];
-	}
-    for (int i = 1; i < numargs - location - 1; i++) {
-        rightargs[i] = commandlist[i + location + 1];
+    char* right_args[num_args - location];
+    my_string = which(command_list[location + 1], 0);
+    if (my_string != NULL)
+        right_args[0] = my_string;
+    else
+        right_args[0] = command_list[location + 1];
+    
+    for (int i = 1; i < num_args - location - 1; i++) {
+        right_args[i] = command_list[i + location + 1];
     }
-    rightargs[numargs - location - 1] = NULL;
-
-    int status =  execute_command(leftargs,STDIN_FILENO,pipefd[1]);
-	close(pipefd[1]);
-	status = execute_command(rightargs,pipefd[0],STDOUT_FILENO);
-	close(pipefd[0]);
+    right_args[num_args - location - 1] = NULL;
+    
+    // Execute left command
+    int status = 0;
+    if (!has_left_redirection) {
+        status = execute_command(left_args, STDIN_FILENO, pipe_fd[1]);
+    }
+    close(pipe_fd[1]);
+    
+    // Check for right redirection
+    int right_redirect_index = hasredirection(right_args, num_args - location - 1);
+    if (right_redirect_index != -1) {
+        if (strcmp(right_args[right_redirect_index], ">") == 0) {
+            int outputfd = open(right_args[right_redirect_index + 1], O_CREAT | O_TRUNC | O_WRONLY, 0640);
+            if (outputfd == -1) {
+                perror("");
+                return -1;
+            }
+            right_args[right_redirect_index] = NULL;
+            status = execute_command(right_args, pipe_fd[0], outputfd);
+            close(pipe_fd[0]);
+            return status;
+        }
+    }
+    
+    // Execute right command
+    status = execute_command(right_args, pipe_fd[0], STDOUT_FILENO);
+    close(pipe_fd[0]);
+    
     return status;
 }
 
 int hasredirection(char** array, int numargs){
     for(int i = 0; i < numargs; i++){
-        if(!strcmp(array[i],">") || !strcmp(array[i],"<")) return i;
+        if(array[i] != NULL){
+			if(!strcmp(array[i],">") || !strcmp(array[i],"<")) return i;
+		}
+		else{
+			return -1;
+		}
     }
     return -1;
 }
@@ -378,22 +426,35 @@ int main (int argc, char** argv) {
     // char** joever = capybara->myarray;
 
     //Enter Batch Mode
-    //Pee in my pants
     signal(SIGINT, goodbye);
     if ((!isatty(STDIN_FILENO) && argc == 1) || argc == 2) {
-        printf("I am in batch mode?!?!?!");
         //attempt to open file and see if it exits
         int file;
         file = open(argv[1], O_RDONLY);
         parserconstruct(file);
         if (file==-1) {
             perror(argv[1]);
+			return -1;
         }
+		char* line = readline();
+		char* commandlist[100];
+		while(line != NULL){
+			//write(STDOUT_FILENO,line,strlen(line));
+			//write(STDOUT_FILENO,"\n",1);
+			memset(commandlist,0,sizeof(commandlist));
+			int numberofcommands = 0;
+			splitInput(line,commandlist,&numberofcommands);
+			run(commandlist,numberofcommands);
+			free(line);
+			line = readline();
+			
+		}
+		return 0;
     } 
     //Enter Interactive Mode
     if(argc == 1 && isatty(STDIN_FILENO)) {
         //print the welcome statement for interactive mode
-        write(STDOUT_FILENO,"Welcome to my fiendish little bomb\n",36);
+        write(STDOUT_FILENO,"Welcome to my shell :-)\n",24);
         //have a loop for our shell
 
         parserconstruct(STDIN_FILENO);
@@ -413,24 +474,13 @@ int main (int argc, char** argv) {
             cd(commandlist[1]);
             } else if (!strcmp(commandlist[0], "which")) {
             char* react = which(commandlist[1],1);
+			free(react);
             } else if (!strcmp(commandlist[0], "pwd")) {
             pwd();
             }
             else{
                 run(commandlist,numberofcommands);
             }
-
-            //if first entry matches programs in directories
-            //not a built in command
-            
-
-            //command does not match any known program
-            //does not match built-in commands nor found through traversal
-
-
-
-
-
             free(commands);
         }
     }

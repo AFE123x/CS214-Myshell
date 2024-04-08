@@ -8,28 +8,45 @@ char aoeustdin = 0;
  *  this is our function that'll read one line from the fd specified by the user
  */
 char* readline() {
-    if(fd == -1){
-        write(STDERR_FILENO,"Error: file descriptor not specified\n",strlen("Error: file descriptor not specified\n"));
+    if (fd == -1) {
+        write(STDERR_FILENO, "Error: file descriptor not specified\n", strlen("Error: file descriptor not specified\n"));
         return NULL;
     }
-    char buf;
-    char* buffer = calloc(sizeof(char), 100);
+
+    char* buffer = malloc(101); // Allocate memory for the buffer
     if (buffer == NULL) {
-        write(STDERR_FILENO,"Memory allocation failed",25);
+        write(STDERR_FILENO, "Memory allocation failed\n", strlen("Memory allocation failed\n"));
         return NULL;
     }
-    
 
-    size_t bytesRead;
-    bytesRead = read(fd, buffer, 100);
+    char ch;
+    size_t index = 0;
+    ssize_t bytes_read;
 
-    if (bytesRead == 0) {
-        free(buffer);
-        return NULL; // Return NULL if end of file is reached
+    while ((bytes_read = read(fd, &ch, 1)) > 0) {
+        if (ch == '\n') {
+            buffer[index] = '\0'; // Null-terminate the string
+            return buffer; // Return the line read
+        } else {
+            buffer[index++] = ch; // Add character to buffer
+            if (index >= 100) {
+                buffer[index] = '\0'; // Null-terminate the string
+                return buffer; // Return the line read (maximum length reached)
+            }
+        }
     }
-    return buffer;
-}
 
+    if (bytes_read == 0 && index == 0) {
+        // End of file reached
+        free(buffer);
+        return NULL;
+    }
+
+    // Error occurred during read
+    free(buffer);
+    write(STDERR_FILENO, "Error reading from file\n", strlen("Error reading from file\n"));
+    return NULL;
+}
 char* mystrdup2(char* str){
     unsigned int length = strlen(str);
     char* toreturn = calloc(sizeof(char) , length + 1);
