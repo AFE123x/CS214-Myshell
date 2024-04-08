@@ -5,6 +5,12 @@
 #include <sys/types.h>
 #include <signal.h>
 #include <glob.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+
 
 #include "./parser.h"
 #include "./execution.h"
@@ -146,11 +152,34 @@ int haspipe(char** array, int numargs){
 	}
 	return -1;
 }
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
+
+
+int arrayhaswildcard(char** array, int numargs){
+    for(int i = 0; i < numargs; i++){
+        if(strchr(array[i],'*') != NULL){
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int wordhaswildcard(char** array, int location) {
+    if (strchr(array[location], '*') != NULL) {
+        return 1;
+    }
+    return 0;
+}
+
+char* expandwildcard(char* word){
+    glob_t globby;
+    if(glob(word,GLOB_ERR,NULL,&globby) != 0){
+        perror("glob");
+        exit(EXIT_FAILURE);
+    }
+    char* toreturn = globby.gl_pathv[0];
+    globfree(&globby);
+    return toreturn;
+}
 
 int handlepiping(char** command_list, int num_args, int location) {
     int pipe_fd[2];
@@ -160,16 +189,28 @@ int handlepiping(char** command_list, int num_args, int location) {
     }
 	
     // Populate left arguments
+    //make the array large enough for the command and the null terminator
     char* left_args[location + 1];
+    //check if the command is a system one
     char* my_string = which(command_list[0], 0);
+    //if NULL, use direct wording for the command
+
+    //check if the wildcard exists in the command
+    int globtime = wordhaswildcard(command_list, location-1);
+    //if we detected a wildcard then we want to expand the wildcard and add it to the array/argument list
+
+
+
     if (my_string != NULL)
         left_args[0] = my_string;
     else
         left_args[0] = command_list[0];
-    
+
+    //now add the rest of the arguments after the command
     for (int i = 1; i < location; i++) {
         left_args[i] = command_list[i];
     }
+    //add the NULL terminator onto the end of the array
     left_args[location] = NULL;
     
     // Check for left redirection on left side (wouldn't exist on right side)
@@ -391,7 +432,7 @@ int run(char** commandlist, int numargs){
 		return handlepiping(commandlist,numargs,checkboi);
 	}
     //check for wildcard in the command and number of arguments
-    int weglobbin = haswildcard(commandlist,numargs);
+    int weglobbin = arrayhaswildcard(commandlist,numargs);
 
 	checkboi = hasredirection(commandlist,numargs);
 	if(checkboi != -1){
