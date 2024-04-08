@@ -1,6 +1,15 @@
 what is a tty?:
     "something that can accept inputs from a keyboard" - https://www.youtube.com/watch?v=SYwbEcNrcjI
 
+Ideas are formulating:
+
+
+For Wildcards:
+Redirects WILL NOT accept wildcards as an output, they will ONLY accept one argument/file
+
+Pipes will ONLY accept Programs as the in and out (technically). No need to account for wildcards on the output (stdin)
+
+The only place wildcards are valid are 
 
 # Reading My Shell:
 

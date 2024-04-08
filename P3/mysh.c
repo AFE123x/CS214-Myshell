@@ -323,7 +323,7 @@ int handle2redirections(char** commandlist, int numargs, int location1, int loca
 
     return 0;
 }
-int handleredirection(char** commandlist, int numargs, int location) {
+int handleredirection(char** commandlist, int numargs, int location, int weglobbin) {
     if (location >= numargs - 1 || location < 1) {
         char* errorstring = "Error: improper redirect location\n";
         write(STDERR_FILENO, errorstring, strlen(errorstring));
@@ -336,6 +336,7 @@ int handleredirection(char** commandlist, int numargs, int location) {
 		}
 
     if (strcmp(commandlist[location], "<") == 0) {
+        //everything under this is for redirection <
         char* commands[location + 1];
         char* newfilepath = which(commandlist[0], 0);
         if (newfilepath != NULL) {
@@ -357,7 +358,8 @@ int handleredirection(char** commandlist, int numargs, int location) {
 		if(newfilepath != NULL) free(newfilepath);
 		return statuscode;
     } else if (strcmp(commandlist[location], ">") == 0) {
- 
+    
+    //everything under this is for redirection >
 	  char* commands[location + 1];
 	  char* mycommands = which(commandlist[0],0);
 	  if(mycommands != NULL){
@@ -380,16 +382,22 @@ int handleredirection(char** commandlist, int numargs, int location) {
 	  
     } 
 }
+
+
 //function that runs programs with fork -> check myshbak.c
 int run(char** commandlist, int numargs){
 	int checkboi = haspipe(commandlist,numargs);
 	if(checkboi != -1){
 		return handlepiping(commandlist,numargs,checkboi);
 	}
+    //check for wildcard in the command and number of arguments
+    int weglobbin = haswildcard(commandlist,numargs);
+
 	checkboi = hasredirection(commandlist,numargs);
 	if(checkboi != -1){
-		return handleredirection(commandlist,numargs,checkboi);
+		return handleredirection(commandlist,numargs,checkboi, weglobbin);
 	}
+    
 	
 	char* myarray[numargs + 1];
 	char* returnpath = which(commandlist[0],0);
@@ -403,17 +411,49 @@ int run(char** commandlist, int numargs){
 		myarray[i] = commandlist[i];
 	}
 	myarray[numargs] = NULL;
-	pid_t process = fork();
-	if(!process){
+
+    //this is for when no redirection is found
+    //AND if there is no wildcard
+    if (!weglobbin) {
+        pid_t process = fork();
+	    if(!process){
 		execv(myarray[0],myarray);
 		
-	}
-	else{
-		int statusnum;
-		waitpid(process,&statusnum,0);
-		if(returnpath != NULL) free(returnpath);
-		return statusnum;
-	}
+	    }
+        else{
+            int statusnum;
+            waitpid(process,&statusnum,0);
+            if(returnpath != NULL) free(returnpath);
+            return statusnum;
+        }
+    } else 
+    //this is for when no redirection is found
+    //AND if there is a wildcard
+    {
+        glob_t globby;
+        if (glob(commandlist[1], GLOB_ERR, NULL, &globby) != 0) {
+            perror("glob");
+            exit(EXIT_FAILURE);
+        }
+        for (int i = 0; i < globby.gl_pathc; i++) {
+            myarray[1] = globby.gl_pathv[i];
+            pid_t p = fork();
+            
+            if (!p) {
+                //find the program
+                char* executable = which(myarray[0],0);
+                //print my array
+                execv(myarray[0], myarray);
+                perror("execv");
+                exit(EXIT_FAILURE);
+            } else {
+                wait(NULL);
+            }
+        }
+        globfree(&globby);
+        if (returnpath != NULL) free(returnpath);    
+    }
+	
 }
 void goodbye(){
     write(STDOUT_FILENO,"\nYou pressed control + c, goodbye!\n",strlen("\nYou pressed control + c, goodbye!\n"));
@@ -481,6 +521,18 @@ int main (int argc, char** argv) {
             else{
                 run(commandlist,numberofcommands);
             }
+
+            //if first entry matches programs in directories
+            //not a built in command
+            
+
+            //command does not match any known program
+            //does not match built-in commands nor found through traversal
+
+
+
+
+
             free(commands);
         }
     }
