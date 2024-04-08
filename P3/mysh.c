@@ -7,7 +7,7 @@
 #include <glob.h>
 
 #include "./parser.h"
-
+#include "./execution.h"
 //=======universal
 #include "./univ.h"
 
@@ -138,18 +138,154 @@ void shell_exit() {
     exit(0);
 }
 ////////////////////////
+int haspipe(char** array, int numargs){
+	for(int i = 0; i < numargs; i++){
+		if(strcmp(array[i],"|") == 0){
+			return i;
+		}
+	}
+	return -1;
+}
+int handlepiping(char** commandlist, int numargs, int location) {
+    int pipefd[2];
+    if (pipe(pipefd) == -1) {
+        perror("pipe");
+        return -1;
+    }
+	
+    // Populate left arguments
+    char* leftargs[location + 1];
+	char* mystring = which(commandlist[0],0);
+	if(mystring != NULL){
+		leftargs[0] = mystring;
+	}
+	else{
+		leftargs[0] = commandlist[0];
+	}
+    for (int i = 1; i < location; i++) {
+        leftargs[i] = commandlist[i];
+    }
+    leftargs[location] = NULL;
+
+    // Populate right arguments
+    char* rightargs[numargs - location];
+	mystring = which(commandlist[location + 1],0);
+	if(mystring != NULL){
+		rightargs[0] = mystring;
+	}
+	else{
+		rightargs[0] = commandlist[location+1];
+	}
+    for (int i = 1; i < numargs - location - 1; i++) {
+        rightargs[i] = commandlist[i + location + 1];
+    }
+    rightargs[numargs - location - 1] = NULL;
+
+    int status =  execute_command(leftargs,STDIN_FILENO,pipefd[1]);
+	close(pipefd[1]);
+	status = execute_command(rightargs,pipefd[0],STDOUT_FILENO);
+	close(pipefd[0]);
+    return status;
+}
+
 int hasredirection(char** array, int numargs){
     for(int i = 0; i < numargs; i++){
-        if(!strcmp(array[i],"|") || !strcmp(array[i],">") || !strcmp(array[i],"<")) return i;
+        if(!strcmp(array[i],">") || !strcmp(array[i],"<")) return i;
     }
     return -1;
+}
+
+int handle2redirections(char** commandlist, int numargs, int location1, int location2){
+    if (location1 < 0 || location1 >= numargs || location2 < 0 || location2 >= numargs) {
+        char* errorstring = "Error: invalid redirect command locations\n";
+        write(STDERR_FILENO, errorstring, strlen(errorstring));
+        return -1;
+    }
+    if (location1 == location2 - 1) { // checks if they're adjacent to each other
+        char* errorstring = "ERROR: Redirects cannot be adjacent to each other\n";
+        write(STDERR_FILENO, errorstring, strlen(errorstring));
+        return -1;
+    }
+    if (strcmp(commandlist[location1], "<") == 0 && strcmp(commandlist[location2], ">") == 0) {
+        int fd[2];
+        pipe(fd);
+
+        int inputfile = open(commandlist[location1 + 1], O_RDONLY);
+        if (inputfile == -1) {
+            perror("Error opening input file");
+            return -1;
+        }
+
+        pid_t pid = fork();
+        if (pid == 0) {
+            // Child process
+            dup2(inputfile, STDIN_FILENO); // Redirect stdin to input file
+            dup2(fd[1], STDOUT_FILENO);    // Redirect stdout to writing end of the pipe
+            close(fd[0]);  // Close unused reading end of the pipe
+            close(fd[1]);  // Close writing end of the pipe
+
+            char* program_name = commandlist[0];
+            char** program_args = malloc((location1 + 1) * sizeof(char *));
+            if (program_args == NULL) {
+                perror("Error allocating memory for program arguments");
+                exit(EXIT_FAILURE);
+            }
+            for (int i = 0; i < location1; i++) {
+                program_args[i] = commandlist[i];
+            }
+            program_args[location1] = NULL;
+
+            execvp(program_name, program_args);
+            perror("execvp");
+            exit(EXIT_FAILURE);
+        } else if (pid > 0) {
+            // Parent process
+            close(fd[1]);  // Close writing end of the pipe
+
+            int outputfile = open(commandlist[location2 + 1], O_CREAT | O_TRUNC | O_WRONLY, 0640);
+            if (outputfile == -1) {
+                perror("Error opening output file");
+                return -1;
+            }
+
+            char buffer[4096];
+            ssize_t bytes_read;
+            while ((bytes_read = read(fd[0], buffer, sizeof(buffer))) > 0) {
+                if (write(outputfile, buffer, bytes_read) == -1) {
+                    perror("Error writing to output file");
+                    return -1;
+                }
+            }
+            if (bytes_read == -1) {
+                perror("Error reading from pipe");
+                return -1;
+            }
+
+            close(outputfile);
+            close(fd[0]);  // Close reading end of the pipe
+        } else {
+            perror("fork");
+            return -1;
+        }
+    } else {
+        char* errorstring = "ERROR: Incorrect redirection sequence\n";
+        write(STDERR_FILENO, errorstring, strlen(errorstring));
+        return -1;
+    }
+
+    return 0;
 }
 int handleredirection(char** commandlist, int numargs, int location) {
     if (location >= numargs - 1 || location < 1) {
         char* errorstring = "Error: improper redirect location\n";
         write(STDERR_FILENO, errorstring, strlen(errorstring));
         return -1;
-    }
+    } //./sum < input.txt > output.txt 
+	 //    0  1     2     3    4           numargs: 5, location: 1
+		int hastworedirections = hasredirection(&commandlist[location + 1], numargs - location);
+		if(hastworedirections != -1){
+			return handle2redirections(commandlist, numargs, location, hastworedirections + location + 1);
+		}
 
     if (strcmp(commandlist[location], "<") == 0) {
         char* commands[location + 1];
@@ -194,46 +330,19 @@ int handleredirection(char** commandlist, int numargs, int location) {
 	  int statuscode = execute_command(commands,STDIN_FILENO,outputfd);
 	  if(mycommands != NULL) free(mycommands);
 	  
-    } else { 
-        // Pipe case
-        int pipefd[2];
-        pipe(pipefd);
-        int numargsize = location + 1;
-        
-        // Populate left arguments
-        char* leftargs[numargsize];
-        for (int i = 0; i < numargsize; i++) {
-            leftargs[i] = commandlist[i];
-        }
-        leftargs[numargsize - 1] = NULL;
-        
-        // Populate right arguments
-        numargsize = numargs - location - 1;
-        char* rightargs[numargsize];
-        for (int i = location + 1; i < numargs; i++) {
-            rightargs[i - location - 1] = commandlist[i];
-        }
-        rightargs[numargsize - 1] = NULL;
-        
-        int toreturn;
-        
-        // Execute left command
-        toreturn = execute_command(leftargs, STDIN_FILENO, pipefd[1]);
-        close(pipefd[1]);
-        
-        // Execute right command
-        toreturn = execute_command(rightargs, pipefd[0], STDOUT_FILENO);
-        close(pipefd[0]);
-        
-        return toreturn;
-    }
+    } 
 }
 //function that runs programs with fork -> check myshbak.c
 int run(char** commandlist, int numargs){
-	int checkboi = hasredirection(commandlist,numargs);
+	int checkboi = haspipe(commandlist,numargs);
+	if(checkboi != -1){
+		return handlepiping(commandlist,numargs,checkboi);
+	}
+	checkboi = hasredirection(commandlist,numargs);
 	if(checkboi != -1){
 		return handleredirection(commandlist,numargs,checkboi);
 	}
+	
 	char* myarray[numargs + 1];
 	char* returnpath = which(commandlist[0],0);
 	if(returnpath != NULL){

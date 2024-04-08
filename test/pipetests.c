@@ -3,7 +3,7 @@
 #include<fcntl.h>
 #include<sys/wait.h>
 #include<stdlib.h>
-
+#include<string.h>
 int execute_command(char* args[], int inputfd, int outputfd) {
     int TempO = dup(STDOUT_FILENO);
     int TempI = dup(STDIN_FILENO);
@@ -61,5 +61,23 @@ int main(int argc, char** argv) {
 	close(afd[1]);
 	execute_command(grepstuff,afd[0],STDOUT_FILENO);
 	close(afd[0]);
+	
+	//===================simulating ./sum < input.txt > output.txt ===============
+	
+	char redirection = {"./sum","<","input.txt",">","output.txt",NULL};
+	int multfrd[2];
+	pipe(multfrd);
+	inputfile = open("./input.txt",O_RDONLY);
+	int* ptr = NULL;
+	if(inputfile == -1)  *ptr = 0x1A4;
+	char* sumargs[] = {"./sum",NULL};
+	execute_command(sumargs,inputfile,multfrd[1]);
+	close(multfrd[1]);
+	outputfile = open("./output.txt",O_CREAT | O_TRUNC | O_WRONLY, 0640);
+	char mybufer[100];
+	memset(mybufer,0,100);
+	read(multfrd[0],mybufer,100);
+	write(outputfile,mybufer,100);
+	close(multfrd[0]);
     return 0;
 }
