@@ -525,9 +525,13 @@ int main (int argc, char** argv) {
 			memset(commandlist,0,sizeof(commandlist));
 			int numberofcommands = 0;
 			splitInput(line,commandlist,&numberofcommands);
-			run(commandlist,numberofcommands);
+			if(numberofcommands != 0){
+				run(commandlist,numberofcommands);
+			
+			}
 			free(line);
 			line = readline();
+			
 			
 		}
 		return 0;
@@ -538,7 +542,7 @@ int main (int argc, char** argv) {
         //print the welcome statement for interactive mode
         write(STDOUT_FILENO,"Welcome to my shell :-)\n",24);
         //have a loop for our shell
-
+		char buf[100];
         parserconstruct(STDIN_FILENO);
         while(1){ 
             write(STDOUT_FILENO,"mysh>",5);
@@ -549,7 +553,7 @@ int main (int argc, char** argv) {
             memset(commandlist,0,sizeof(commandlist));
             splitInput(commands, commandlist, &numberofcommands);
             //if first entry matches built in commands
-
+			if(numberofcommands >= 1){
             if (!strcmp(commandlist[0], "exit")) {
             shell_exit();
             } else if (!strcmp(commandlist[0], "cd")) {
@@ -562,15 +566,27 @@ int main (int argc, char** argv) {
             } else if (!strcmp(commandlist[0], "then")) {
                 if(statuscapy == 0){
                     statuscapy = run(&commandlist[1],numberofcommands - 1);
+					
+					sprintf(buf,"exit code: %d\n",statuscapy);
+					write(STDOUT_FILENO,buf,strlen(buf));
+					
                 }
             } else if (!strcmp(commandlist[0], "else")) {
-                if(statuscapy != 0){
                     statuscapy = run(&commandlist[1],numberofcommands - 1);
-                }
+					//char buf[100];
+					sprintf(buf,"exit code: %d\n",statuscapy);
+					write(STDOUT_FILENO,buf,strlen(buf));
+                
             }
             else{
+				
                 statuscapy = run(commandlist,numberofcommands);
+				//char buf[100];
+				sprintf(buf,"exit code: %d\n",statuscapy);
+				write(STDOUT_FILENO,buf,strlen(buf));
             }
+			}
+			statuscapy = 1;
 
             //if first entry matches programs in directories
             //not a built in command
