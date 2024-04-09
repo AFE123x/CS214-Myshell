@@ -534,6 +534,7 @@ int main (int argc, char** argv) {
     } 
     //Enter Interactive Mode
     if(argc == 1 && isatty(STDIN_FILENO)) {
+        int statuscapy = 0;
         //print the welcome statement for interactive mode
         write(STDOUT_FILENO,"Welcome to my shell :-)\n",24);
         //have a loop for our shell
@@ -558,9 +559,17 @@ int main (int argc, char** argv) {
 			free(react);
             } else if (!strcmp(commandlist[0], "pwd")) {
             pwd();
+            } else if (!strcmp(commandlist[0], "then")) {
+                if(statuscapy == 0){
+                    statuscapy = run(&commandlist[1],numberofcommands - 1);
+                }
+            } else if (!strcmp(commandlist[0], "else")) {
+                if(statuscapy != 0){
+                    statuscapy = run(&commandlist[1],numberofcommands - 1);
+                }
             }
             else{
-                run(commandlist,numberofcommands);
+                statuscapy = run(commandlist,numberofcommands);
             }
 
             //if first entry matches programs in directories
