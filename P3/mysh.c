@@ -16,7 +16,7 @@
 #include "./execution.h"
 //=======universal
 #include "./univ.h"
-
+int stupid = 0;
 #define BUFFER_SIZE 4096
 
 //toggle debugging mode
@@ -52,8 +52,8 @@ char* mystrdup(char* word){
 //searches the directory for the given program with the provided path
 char* search_directory(const char *path, const char *program, char flag) {
     if(DEBUG){
-        write(STDOUT_FILENO,path,strlen(path));
-        write(STDOUT_FILENO,"\n",1);
+        stupid = write(STDOUT_FILENO,path,strlen(path));
+        stupid = write(STDOUT_FILENO,"\n",1);
     }
     //will hold the path to the program if found
     char* toreturn = NULL;
@@ -85,8 +85,8 @@ char* search_directory(const char *path, const char *program, char flag) {
         // Once the correct directory is found, proceed to saving the program path
         if (strcmp(entry->d_name, program) == 0) {
             if(flag){
-            write(STDOUT_FILENO, full_path, strlen(full_path));
-            write(STDOUT_FILENO, "\n", 1); // Add newline
+            stupid = write(STDOUT_FILENO, full_path, strlen(full_path));
+            stupid = write(STDOUT_FILENO, "\n", 1); // Add newline
             }
             //save the path to the program
             toreturn = mystrdup(full_path);
@@ -127,9 +127,9 @@ void pwd() {
     char buf[BUFFER_SIZE];
 
     if (getcwd(buf, sizeof(buf)) != NULL) {
-        write(STDOUT_FILENO, buf, strlen(buf));
+        stupid = write(STDOUT_FILENO, buf, strlen(buf));
         //add a new line to be extra
-        write(STDOUT_FILENO, "\n",1);
+        stupid = write(STDOUT_FILENO, "\n",1);
     } else {
         perror("getcwd() error");
         return 1;
@@ -140,7 +140,7 @@ void pwd() {
 
 //quits the shell program
 void shell_exit() {
-    write(STDOUT_FILENO,"its so hard to say goodbye :(\n",31);
+    stupid = write(STDOUT_FILENO,"its so hard to say goodbye :(\n",31);
     exit(0);
 }
 ////////////////////////
@@ -287,12 +287,12 @@ int hasredirection(char** array, int numargs){
 int handle2redirections(char** commandlist, int numargs, int location1, int location2){
     if (location1 < 0 || location1 >= numargs || location2 < 0 || location2 >= numargs) {
         char* errorstring = "Error: invalid redirect command locations\n";
-        write(STDERR_FILENO, errorstring, strlen(errorstring));
+        stupid = write(STDERR_FILENO, errorstring, strlen(errorstring));
         return -1;
     }
     if (location1 == location2 - 1) { // checks if they're adjacent to each other
         char* errorstring = "ERROR: Redirects cannot be adjacent to each other\n";
-        write(STDERR_FILENO, errorstring, strlen(errorstring));
+        stupid = write(STDERR_FILENO, errorstring, strlen(errorstring));
         return -1;
     }
     if (strcmp(commandlist[location1], "<") == 0 && strcmp(commandlist[location2], ">") == 0) {
@@ -340,7 +340,8 @@ int handle2redirections(char** commandlist, int numargs, int location1, int loca
             char buffer[4096];
             ssize_t bytes_read;
             while ((bytes_read = read(fd[0], buffer, sizeof(buffer))) > 0) {
-                if (write(outputfile, buffer, bytes_read) == -1) {
+				stupid = write(outputfile, buffer, bytes_read);
+                if ( stupid == -1) {
                     perror("Error writing to output file");
                     return -1;
                 }
@@ -358,7 +359,7 @@ int handle2redirections(char** commandlist, int numargs, int location1, int loca
         }
     } else {
         char* errorstring = "ERROR: Incorrect redirection sequence\n";
-        write(STDERR_FILENO, errorstring, strlen(errorstring));
+        stupid = write(STDERR_FILENO, errorstring, strlen(errorstring));
         return -1;
     }
 
@@ -367,7 +368,7 @@ int handle2redirections(char** commandlist, int numargs, int location1, int loca
 int handleredirection(char** commandlist, int numargs, int location, int weglobbin) {
     if (location >= numargs - 1 || location < 1) {
         char* errorstring = "Error: improper redirect location\n";
-        write(STDERR_FILENO, errorstring, strlen(errorstring));
+        stupid = write(STDERR_FILENO, errorstring, strlen(errorstring));
         return -1;
     } //./sum < input.txt > output.txt 
 	 //    0  1     2     3    4           numargs: 5, location: 1
@@ -497,7 +498,7 @@ int run(char** commandlist, int numargs){
 	
 }
 void goodbye(){
-    write(STDOUT_FILENO,"\nYou pressed control + c, goodbye!\n",strlen("\nYou pressed control + c, goodbye!\n"));
+    stupid = write(STDOUT_FILENO,"\nYou pressed control + c, goodbye!\n",strlen("\nYou pressed control + c, goodbye!\n"));
     exit(0);
 }
 int main (int argc, char** argv) {
@@ -508,10 +509,19 @@ int main (int argc, char** argv) {
 
     //Enter Batch Mode
     signal(SIGINT, goodbye);
-    if ((!isatty(STDIN_FILENO) && argc == 1) || argc == 2) {
+    if ((!isatty(STDIN_FILENO)) || argc == 2) {
         //attempt to open file and see if it exits
         int file;
-        file = open(argv[1], O_RDONLY);
+        if(argc > 1){
+			file = open(argv[1], O_RDONLY);
+			if(file == -1){
+				perror("");
+				exit(EXIT_FAILURE);
+			}
+		}
+		else{
+			dup2(STDIN_FILENO,file);
+		}
         parserconstruct(file);
         if (file==-1) {
             perror(argv[1]);
@@ -520,8 +530,7 @@ int main (int argc, char** argv) {
 		char* line = readline();
 		char* commandlist[100];
 		while(line != NULL){
-			//write(STDOUT_FILENO,line,strlen(line));
-			//write(STDOUT_FILENO,"\n",1);
+			
 			memset(commandlist,0,sizeof(commandlist));
 			int numberofcommands = 0;
 			splitInput(line,commandlist,&numberofcommands);
@@ -540,12 +549,12 @@ int main (int argc, char** argv) {
     if(argc == 1 && isatty(STDIN_FILENO)) {
         int statuscapy = 0;
         //print the welcome statement for interactive mode
-        write(STDOUT_FILENO,"Welcome to my shell :-)\n",24);
+        stupid = write(STDOUT_FILENO,"Welcome to my shell :-)\n",24);
         //have a loop for our shell
 		char buf[100];
         parserconstruct(STDIN_FILENO);
         while(1){ 
-            write(STDOUT_FILENO,"mysh>",5);
+            stupid = write(STDOUT_FILENO,"mysh>",5);
             char* commands = readline();
             int numberofcommands = 0;
             char* mycommand = " ";
@@ -563,19 +572,16 @@ int main (int argc, char** argv) {
 			free(react);
             } else if (!strcmp(commandlist[0], "pwd")) {
             pwd();
-            } else if (!strcmp(commandlist[0], "then")) {
+            } else if (strcmp(commandlist[0], "then") == 0) {
+				//sprintf(buf,"statuscapy: %d\n",statuscapy);
+				//write(STDOUT_FILENO,buf,strlen(buf));
                 if(statuscapy == 0){
                     statuscapy = run(&commandlist[1],numberofcommands - 1);
-					
-					sprintf(buf,"exit code: %d\n",statuscapy);
-					write(STDOUT_FILENO,buf,strlen(buf));
-					
                 }
             } else if (!strcmp(commandlist[0], "else")) {
+					if(statuscapy != 0){
                     statuscapy = run(&commandlist[1],numberofcommands - 1);
-					//char buf[100];
-					sprintf(buf,"exit code: %d\n",statuscapy);
-					write(STDOUT_FILENO,buf,strlen(buf));
+					}
                 
             }
             else{
@@ -583,10 +589,10 @@ int main (int argc, char** argv) {
                 statuscapy = run(commandlist,numberofcommands);
 				//char buf[100];
 				sprintf(buf,"exit code: %d\n",statuscapy);
-				write(STDOUT_FILENO,buf,strlen(buf));
+				stupid = write(STDOUT_FILENO,buf,strlen(buf));
             }
 			}
-			statuscapy = 1;
+			//statuscapy = 1;
 
             //if first entry matches programs in directories
             //not a built in command

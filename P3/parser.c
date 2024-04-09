@@ -3,19 +3,19 @@
 int fd = -1;
 char wasopened = 1;
 char aoeustdin = 0;
-
+int temptempcapy = 0;
 /**
  *  this is our function that'll read one line from the fd specified by the user
  */
 char* readline() {
     if (fd == -1) {
-        write(STDERR_FILENO, "Error: file descriptor not specified\n", strlen("Error: file descriptor not specified\n"));
+        temptempcapy = write(STDERR_FILENO, "Error: file descriptor not specified\n", strlen("Error: file descriptor not specified\n"));
         return NULL;
     }
 
     char* buffer = malloc(101); // Allocate memory for the buffer
     if (buffer == NULL) {
-        write(STDERR_FILENO, "Memory allocation failed\n", strlen("Memory allocation failed\n"));
+        temptempcapy = write(STDERR_FILENO, "Memory allocation failed\n", strlen("Memory allocation failed\n"));
         return NULL;
     }
 
@@ -44,7 +44,7 @@ char* readline() {
 
     // Error occurred during read
     free(buffer);
-    write(STDERR_FILENO, "Error reading from file\n", strlen("Error reading from file\n"));
+    temptempcapy = write(STDERR_FILENO, "Error reading from file\n", strlen("Error reading from file\n"));
     return NULL;
 }
 char* mystrdup2(char* str){
