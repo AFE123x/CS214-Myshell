@@ -5,6 +5,14 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <linux/limits.h>
+/**
+ * Search for a program in a directory 
+ * @param path The path to search
+ * @param program The program to search for
+ * @return void
+ * 
+*/
 void search_directory(const char *path, const char* program) {
     DIR *directory;
     struct dirent *entry;
@@ -37,7 +45,12 @@ void search_directory(const char *path, const char* program) {
     // Close the directory
     closedir(directory);
 }
-
+/**
+ * Main function
+ * @param argc Argument count
+ * @param argv Argument vector
+ * @return int
+*/
 int main(int argc, char *argv[]) {
     if (argc != 2) {
         fprintf(stderr, "Usage: %s <program_name>\n", argv[0]);

@@ -4,6 +4,14 @@
 #include<sys/wait.h>
 #include<stdlib.h>
 #include<string.h>
+/**
+ * Execute a command with input and output redirection
+ * @param args The command to execute
+ * @param inputfd The file descriptor for input redirection
+ * @param outputfd The file descriptor for output redirection
+ * @return void
+ * 
+*/
 int execute_command(char* args[], int inputfd, int outputfd) {
     int TempO = dup(STDOUT_FILENO);
     int TempI = dup(STDIN_FILENO);
@@ -26,6 +34,13 @@ int execute_command(char* args[], int inputfd, int outputfd) {
     }
 }
 
+/**
+ * Main function
+ * @param argc Argument count
+ * @param argv Argument vector
+ * @return int
+ * 
+*/
 int main(int argc, char** argv) {
 
 	//===================simulating redirection with STDOUT========================
